@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>FitTracker Pro - Entrenamiento Personalizado & Fotos de Progreso</title>
+    
+    <!-- Meta tags para PWA y Móvil -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#020617">
+    <meta name="description" content="App de entrenamiento con gestión de microciclos, control de cargas, fotos de progreso y técnica de ejercicios.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+
+    <!-- Fuentes e Iconos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-16 selection:bg-emerald-500 selection:text-slate-950">
+
+    <!-- ==================================================================== -->
+    <!-- 1. PANTALLA DE INICIO DE SESIÓN (LOGIN VIEW)                          -->
+    <!-- ==================================================================== -->
+    <div id="view-login" class="min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <!-- Logo y Cabecera -->
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 mx-auto mb-3 shadow-lg shadow-emerald-500/25">
+                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                        <svg class="w-7 h-7 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20.57 14.86L22 13.43L20.57 12L17 15.57L8.43 7L12 3.43L10.57 2L9.14 3.43L7.71 2L5.57 4.14L4.14 2.71L2.71 4.14L4.14 5.57L2 7.71L3.43 9.14L2 10.57L3.43 12L7 8.43L15.57 17L12 20.57L13.43 22L14.86 20.57L16.29 22L18.43 19.86L19.86 21.29L21.29 19.86L19.86 18.43L22 16.29L20.57 14.86Z"/>
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-tight">FIT<span class="text-emerald-400">TRACKER</span> <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">PRO</span></h1>
+                <p class="text-xs text-slate-400 mt-1">Ingresa para acceder a tus microciclos y fotos de progreso</p>
+            </div>
+
+            <!-- Formulario de Login -->
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico</label>
+                    <input type="email" id="login-email" required placeholder="correo@ejemplo.com" class="w-full h-12 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3.5 text-sm text-white outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="w-full h-12 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3.5 text-sm text-white outline-none transition">
+                </div>
+
+                <button type="submit" class="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl shadow-lg shadow-emerald-500/25 transition touch-btn text-sm">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Acceso Rápido de Demostración -->
+            <div class="mt-6 pt-5 border-t border-slate-800 text-center">
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-2.5">Accesos Rápidos de Prueba (1 Clic)</span>
+                <div class="flex flex-col gap-2 text-xs">
+                    <button type="button" onclick="autocompletarLogin('admin@fittracker.com', 'admin123')" class="py-2 px-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-xl flex items-center justify-between text-slate-300 transition">
+                        <span class="font-bold text-cyan-400">👑 Entrenador / Admin</span>
+                        <span class="text-[11px] text-slate-500">admin@fittracker.com</span>
+                    </button>
+                    <button type="button" onclick="autocompletarLogin('mateo.valenzuela@email.com', 'cliente123')" class="py-2 px-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl flex items-center justify-between text-slate-300 transition">
+                        <span class="font-bold text-emerald-400">🏃 Atleta: Mateo (con fotos)</span>
+                        <span class="text-[11px] text-slate-500">mateo.valenzuela...</span>
+                    </button>
+                    <button type="button" onclick="autocompletarLogin('sofia.rossi@email.com', 'cliente123')" class="py-2 px-3 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-emerald-500/40 rounded-xl flex items-center justify-between text-slate-300 transition">
+                        <span class="font-bold text-emerald-400">🏃 Atleta: Sofía</span>
+                        <span class="text-[11px] text-slate-500">sofia.rossi...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- 2. APLICACIÓN PRINCIPAL AUTENTICADA (APP VIEW)                        -->
+    <!-- ==================================================================== -->
+    <div id="view-app" class="hidden">
+
+        <!-- BARRA SUPERIOR FIJA / HEADER RESPONSIVO -->
+        <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 safe-top w-full max-w-full">
+            <div class="max-w-2xl mx-auto px-3 sm:px-4 py-2.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                <!-- Logotipo y Rol + Acciones Rápidas Móviles -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 p-0.5 flex items-center justify-center flex-shrink-0">
+                            <div class="w-full h-full bg-slate-950 rounded-[9px] flex items-center justify-center">
+                                <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20.57 14.86L22 13.43L20.57 12L17 15.57L8.43 7L12 3.43L10.57 2L9.14 3.43L7.71 2L5.57 4.14L4.14 2.71L2.71 4.14L4.14 5.57L2 7.71L3.43 9.14L2 10.57L3.43 12L7 8.43L15.57 17L12 20.57L13.43 22L14.86 20.57L16.29 22L18.43 19.86L19.86 21.29L21.29 19.86L19.86 18.43L22 16.29L20.57 14.86Z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="font-black text-sm tracking-tight text-white">FIT<span class="text-emerald-400">TRACKER</span></span>
+                                <span id="user-role-badge" class="text-[9px] uppercase font-black px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ATLETA</span>
+                            </div>
+                            <p id="user-email-display" class="text-[10px] text-slate-400 truncate max-w-[140px] sm:max-w-xs -mt-0.5">Usuario</p>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción Móviles -->
+                    <div class="flex items-center space-x-1.5 sm:hidden">
+                        <a href="admin.php" class="admin-only hidden px-2.5 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/30 text-[11px] font-bold" title="Panel de Entrenador">
+                            <span>👑 Coach</span>
+                        </a>
+                        <button type="button" onclick="cerrarSesion()" class="p-1.5 bg-slate-900 text-rose-400 rounded-xl border border-slate-800" title="Cerrar Sesión">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selector de Cliente (Solo visible para Admin) y Acciones Desktop -->
+                <div class="flex items-center gap-1.5 w-full sm:w-auto">
+                    <div class="admin-only hidden relative flex-1 sm:flex-initial sm:w-48">
+                        <select id="select-cliente" class="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-slate-600 text-xs font-bold text-white rounded-xl pl-2.5 pr-7 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer transition truncate">
+                            <option value="">Cargando...</option>
+                        </select>
+                        <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </div>
+
+                    <div class="hidden sm:flex items-center space-x-1.5">
+                        <a href="admin.php" class="admin-only hidden px-2.5 py-1.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded-xl border border-cyan-500/30 text-[11px] font-bold transition flex items-center space-x-1" title="Panel Completo de Entrenador">
+                            <span>👑 Panel Coach</span>
+                        </a>
+
+                        <button type="button" onclick="cerrarSesion()" class="p-2 bg-slate-900 hover:bg-slate-800 text-rose-400 hover:text-rose-300 rounded-xl border border-slate-800 transition touch-btn" title="Cerrar Sesión">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- NAVEGACIÓN PRINCIPAL: [ MI RUTINA ] vs [ FOTOS DE PROGRESO ] -->
+        <div class="max-w-2xl mx-auto px-3 sm:px-4 pt-3 w-full max-w-full">
+            <div class="flex flex-col sm:flex-row p-1 bg-slate-900 border border-slate-800 rounded-2xl gap-1">
+                <button type="button" id="tab-btn-rutina" onclick="cambiarVistaPrincipal('rutina')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 flex items-center justify-center space-x-1.5">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <span>Rutina &amp; Cargas (S1..S5)</span>
+                </button>
+                <button type="button" id="tab-btn-progreso" onclick="cambiarVistaPrincipal('progreso')" class="flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-white flex items-center justify-center space-x-1.5">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>Fotos de Progreso</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <main class="max-w-2xl mx-auto px-3 sm:px-4 pt-3 space-y-4 w-full max-w-full overflow-x-hidden">
+
+            <!-- FICHA DEL ATLETA (Común a ambas vistas) -->
+            <section class="bg-gradient-to-b from-slate-900 to-slate-900/90 rounded-3xl p-4 sm:p-5 border border-slate-800 shadow-xl relative overflow-hidden">
+                <div class="flex items-start justify-between gap-3 relative z-10">
+                    <div class="flex items-center space-x-3">
+                        <div id="cliente-avatar" class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-700 text-emerald-400 font-black text-lg flex items-center justify-center border border-slate-700 shadow-inner">
+                            --
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h2 id="cliente-nombre" class="text-lg sm:text-xl font-black text-white tracking-tight">Cargando...</h2>
+                                <button onclick="abrirModalCliente(AppState.clienteActivoId)" class="text-slate-400 hover:text-slate-200 transition" title="Editar perfil">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                <span>Atleta Activo</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Peso Corporal Actual con 1-Tap Edit -->
+                    <div onclick="abrirModalPesoRapido()" class="cursor-pointer group bg-slate-950/70 hover:bg-slate-950 border border-slate-800 hover:border-emerald-500/40 p-2.5 rounded-2xl text-right transition touch-btn">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Peso Actual</span>
+                        <div class="flex items-center justify-end space-x-1">
+                            <span id="cliente-peso" class="text-lg font-black text-emerald-400 font-mono tracking-tight group-hover:scale-105 transition">-- kg</span>
+                            <svg class="w-3 h-3 text-slate-500 group-hover:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerta de Anamnesis / Lesiones -->
+                <div id="cliente-observaciones-container" class="mt-3.5 pt-3 border-t border-slate-800/80 hidden">
+                    <div class="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-2.5 flex items-start space-x-2.5">
+                        <div class="text-amber-400 flex-shrink-0 mt-0.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        </div>
+                        <div class="flex-1 text-xs text-amber-200/90 leading-relaxed">
+                            <span class="font-bold text-amber-400 block mb-0.5 uppercase tracking-wide text-[10px]">Anamnesis & Observaciones Clínicas:</span>
+                            <span id="cliente-observaciones">--</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================================ -->
+            <!-- VISTA 1: RUTINA Y CARGAS                                      -->
+            <!-- ============================================================ -->
+            <div id="seccion-rutina" class="space-y-4">
+                <!-- NAVEGADOR DE SEMANAS S1..S5 -->
+                <section class="space-y-1.5">
+                    <div class="flex items-center justify-between px-1">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Microciclo de Entrenamiento</span>
+                        <span class="text-[11px] text-emerald-400 font-semibold">5 Semanas de Ciclo</span>
+                    </div>
+                    <div id="semanas-nav" class="flex gap-2 p-1.5 bg-slate-900/60 rounded-3xl border border-slate-800/80">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </section>
+
+                <!-- FILTRO POR DÍAS -->
+                <section class="flex items-center justify-between gap-2 pt-1">
+                    <div id="filtro-dias" class="flex gap-1.5 overflow-x-auto no-scrollbar py-1 w-full">
+                        <!-- Generado por JavaScript -->
+                    </div>
+                </section>
+
+                <!-- LISTA DE EJERCICIOS Y REGISTRO DE CARGAS -->
+                <section id="ejercicios-container" class="space-y-6 pt-1">
+                    <!-- Tarjetas interactivas renderizadas por app.js -->
+                </section>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- VISTA 2: FOTOS DE PROGRESO & COMPARADOR                        -->
+            <!-- ============================================================ -->
+            <div id="seccion-progreso" class="space-y-4 hidden">
+                <!-- Barra de Acciones de Fotos -->
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm font-extrabold text-white tracking-wide uppercase">Evolución Fotográfica</h3>
+                        <p class="text-[11px] text-slate-400">Registro visual de microciclos</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="btn-abrir-comparador" onclick="abrirModalComparador()" class="py-2 px-3 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold text-xs flex items-center space-x-1.5 transition touch-btn">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                            <span>Comparar (Antes/Después)</span>
+                        </button>
+
+                        <button type="button" id="btn-subir-foto-principal" onclick="abrirModalSubirFoto()" class="py-2 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 flex items-center space-x-1.5 transition touch-btn">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                            <span>+ Subir Foto</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cuadrícula de Fotos de Progreso -->
+                <div id="fotos-container" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <!-- Renderizado dinámicamente por app.js -->
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- 3. MODALES INTERACTIVOS                                              -->
+    <!-- ==================================================================== -->
+
+    <!-- MODAL 1: SUBIR FOTO DE PROGRESO -->
+    <div id="modal-subir-foto" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-md rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="text-base font-black text-white">Subir Foto de Progreso</h3>
+                <button type="button" onclick="cerrarModalSubirFoto()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <form id="form-subir-foto" class="mt-4 space-y-3.5">
+                <!-- Input de archivo con soporte de cámara en móviles -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Fotografía (JPG, PNG, WEBP) *</label>
+                    <input type="file" id="foto-input-file" accept="image/jpeg,image/png,image/webp,image/svg+xml" capture="environment" required onchange="onFotoFileChange(event)" class="w-full text-xs text-slate-300 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-emerald-500 file:text-slate-950 hover:file:bg-emerald-400 cursor-pointer">
+                </div>
+
+                <!-- Previsualización en vivo -->
+                <div id="foto-preview-container" class="hidden text-center">
+                    <img id="foto-preview-img" src="" alt="Previsualización" class="max-h-48 mx-auto rounded-xl border border-slate-800 shadow">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Semana del Ciclo *</label>
+                        <select id="foto-semana" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                            <option value="1">Semana 1 (S1)</option>
+                            <option value="2">Semana 2 (S2)</option>
+                            <option value="3">Semana 3 (S3)</option>
+                            <option value="4">Semana 4 (S4)</option>
+                            <option value="5">Semana 5 (S5)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Ángulo de Toma *</label>
+                        <select id="foto-angulo" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                            <option value="frente">Frente</option>
+                            <option value="perfil">Perfil Lateral</option>
+                            <option value="espalda">Espalda</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Fecha de la Toma *</label>
+                    <input type="date" id="foto-fecha" required class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Observaciones / Sensaciones</label>
+                    <textarea id="foto-observaciones" rows="2" placeholder="ej. Ayunas, peso 78.5 kg, buena definición de core..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-emerald-500 outline-none resize-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="cerrarModalSubirFoto()" class="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20">Subir Fotografía</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: COMPARADOR DE FOTOS (ANTES VS DESPUÉS) -->
+    <div id="modal-comparador" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-lg sm:max-w-xl rounded-3xl p-4 sm:p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <span class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </span>
+                    <h3 class="text-base font-black text-white">Comparador de Evolución (Antes vs. Después)</h3>
+                </div>
+                <button type="button" onclick="cerrarModalComparador()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Selectores de Fotos A y B -->
+            <div class="grid grid-cols-2 gap-3 my-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 mb-1">Foto Inicial (Antes)</label>
+                    <select id="comparar-select-a" onchange="actualizarComparacion()" class="w-full h-10 bg-slate-950 border border-slate-700 rounded-xl px-2.5 text-xs text-white outline-none focus:border-cyan-500"></select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 mb-1">Foto Posterior (Después)</label>
+                    <select id="comparar-select-b" onchange="actualizarComparacion()" class="w-full h-10 bg-slate-950 border border-slate-700 rounded-xl px-2.5 text-xs text-white outline-none focus:border-emerald-500"></select>
+                </div>
+            </div>
+
+            <!-- Vista Lado a Lado -->
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Columna Foto A -->
+                <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 text-center">
+                    <div class="aspect-photo bg-slate-900 rounded-xl overflow-hidden mb-2 relative">
+                        <img id="comp-img-a" src="" alt="Foto A" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='uploads/ejercicios/placeholder_exercise.svg';">
+                        <span id="comp-tag-a" class="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-black bg-slate-950/80 text-cyan-400 border border-cyan-500/30">S1</span>
+                    </div>
+                    <p id="comp-fecha-a" class="text-xs font-bold text-slate-300">--</p>
+                    <p id="comp-obs-a" class="text-[10px] text-slate-400 mt-1 line-clamp-2">--</p>
+                </div>
+
+                <!-- Columna Foto B -->
+                <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 text-center">
+                    <div class="aspect-photo bg-slate-900 rounded-xl overflow-hidden mb-2 relative">
+                        <img id="comp-img-b" src="" alt="Foto B" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='uploads/ejercicios/placeholder_exercise.svg';">
+                        <span id="comp-tag-b" class="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-black bg-slate-950/80 text-emerald-400 border border-emerald-500/30">S4</span>
+                    </div>
+                    <p id="comp-fecha-b" class="text-xs font-bold text-slate-300">--</p>
+                    <p id="comp-obs-b" class="text-[10px] text-slate-400 mt-1 line-clamp-2">--</p>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-800 text-center">
+                <button type="button" onclick="cerrarModalComparador()" class="py-2.5 px-6 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">
+                    Cerrar Comparador
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: VISOR DETALLE DE FOTO INDIVIDUAL -->
+    <div id="modal-foto-detalle" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden" onclick="cerrarModalFotoDetalle()">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-sm rounded-3xl p-4 shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800">
+                <h4 id="foto-detalle-titulo" class="text-sm font-bold text-white">Detalle de Foto</h4>
+                <button type="button" onclick="cerrarModalFotoDetalle()" class="text-slate-400 hover:text-white">✕</button>
+            </div>
+            <div class="aspect-photo bg-slate-950 rounded-2xl overflow-hidden mb-3">
+                <img id="foto-detalle-img" src="" alt="Foto" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='uploads/ejercicios/placeholder_exercise.svg';">
+            </div>
+            <div class="text-xs space-y-1">
+                <p class="text-slate-400">Fecha: <span id="foto-detalle-fecha" class="text-white font-mono"></span></p>
+                <p class="text-slate-300" id="foto-detalle-obs"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: VISOR DE TÉCNICA E IMAGEN DEMOSTRATIVA DE EJERCICIO -->
+    <div id="modal-tecnica" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-md rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-start justify-between pb-3 border-b border-slate-800">
+                <div>
+                    <span id="tecnica-dia" class="text-[10px] uppercase font-bold text-emerald-400">Día 1</span>
+                    <h3 id="tecnica-titulo" class="text-lg font-black text-white leading-tight">Nombre Ejercicio</h3>
+                </div>
+                <button type="button" onclick="cerrarModalTecnica()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Imagen técnica o GIF -->
+            <div id="tecnica-img-container" class="my-4">
+                <!-- Inyectado por app.js -->
+            </div>
+
+            <!-- Parámetros prescritos -->
+            <div class="grid grid-cols-2 gap-2 my-3 text-center">
+                <div class="p-2 bg-slate-950 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-500 uppercase block font-bold">Volumen Prescrito</span>
+                    <span id="tecnica-series-reps" class="text-xs font-black text-emerald-400 font-mono">4 × 8-10</span>
+                </div>
+                <div class="p-2 bg-slate-950 rounded-xl border border-slate-800">
+                    <span class="text-[10px] text-slate-500 uppercase block font-bold">1RM de Referencia</span>
+                    <span id="tecnica-1rm" class="text-xs font-black text-cyan-400 font-mono">100 kg</span>
+                </div>
+            </div>
+
+            <!-- Indicaciones y Cue Técnico -->
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300">
+                <span class="font-bold text-slate-400 block mb-1 uppercase text-[10px]">Indicaciones del Entrenador:</span>
+                <p id="tecnica-obs" class="leading-relaxed">--</p>
+            </div>
+
+            <div class="mt-4 pt-2 text-center">
+                <button type="button" onclick="cerrarModalTecnica()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs">
+                    Entendido, Volver a la Rutina
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: PANEL DE GESTIÓN DE USUARIOS (ADMIN) -->
+    <div id="modal-gestion-usuarios" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-lg rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="text-base font-black text-white">Panel de Usuarios & Atletas</h3>
+                <button type="button" onclick="cerrarModalGestionUsuarios()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">✕</button>
+            </div>
+
+            <div class="my-3 flex justify-between items-center">
+                <span class="text-xs text-slate-400">Total de usuarios en la plataforma</span>
+                <button onclick="editarUsuarioDesdeAdmin(0)" class="py-1.5 px-3 bg-emerald-500 text-slate-950 font-black rounded-xl text-xs">
+                    + Crear Usuario
+                </button>
+            </div>
+
+            <div id="lista-usuarios-admin" class="space-y-2 overflow-y-auto flex-1 pr-1">
+                <!-- Inyectado por app.js -->
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 text-right">
+                <button onclick="cerrarModalGestionUsuarios()" class="py-2 px-4 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: GESTIÓN DE ATLETA / USUARIO (CREAR O EDITAR) -->
+    <div id="modal-cliente" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 id="modal-cliente-titulo" class="text-base sm:text-lg font-black text-white">Datos del Atleta</h3>
+                <button type="button" onclick="cerrarModalCliente()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">✕</button>
+            </div>
+
+            <form id="form-cliente" class="mt-4 space-y-3.5">
+                <input type="hidden" id="cliente-form-id" value="">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Nombre *</label>
+                        <input type="text" id="cliente-form-nombre" required placeholder="Carlos" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Apellido *</label>
+                        <input type="text" id="cliente-form-apellido" required placeholder="Mendoza" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
+                        <input type="email" id="cliente-form-email" required placeholder="atleta@correo.com" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña (opcional)</label>
+                        <input type="password" id="cliente-form-password" placeholder="Nueva contraseña" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Peso Corporal Actual (kg) *</label>
+                        <input type="number" step="0.1" id="cliente-form-peso" required placeholder="75.0" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Teléfono (WhatsApp)</label>
+                        <input type="tel" id="cliente-form-telefono" placeholder="+54 9 11 ..." class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div id="cliente-form-rol-group">
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Rol en la Plataforma</label>
+                    <select id="cliente-form-rol" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                        <option value="cliente">Atleta / Cliente</option>
+                        <option value="admin">Entrenador / Administrador</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Anamnesis / Lesiones / Objetivos Médicos</label>
+                    <textarea id="cliente-form-observaciones" rows="3" placeholder="Molestias articulares, antecedentes médicos, cirugías, metas..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-emerald-500 outline-none resize-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="cerrarModalCliente()" class="flex-1 py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">Cancelar</button>
+                    <button type="submit" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20">Guardar Datos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 7: NUEVO / EDITAR EJERCICIO (CON IMAGEN TÉCNICA) -->
+    <div id="modal-ejercicio" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-lg rounded-3xl p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 id="modal-ejercicio-titulo" class="text-base font-black text-white">Nuevo Ejercicio</h3>
+                <button type="button" onclick="cerrarModalEjercicio()" class="p-1.5 text-slate-400 hover:text-white rounded-lg">✕</button>
+            </div>
+
+            <form id="form-ejercicio" class="mt-4 space-y-3.5">
+                <input type="hidden" id="ejercicio-form-id" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Día de la Rutina *</label>
+                    <select id="ejercicio-form-dia" required class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                        <option value="1">Día 1 (Empuje / Torso)</option>
+                        <option value="2">Día 2 (Pierna / Tracción)</option>
+                        <option value="3">Día 3 (Torso / Fullbody)</option>
+                        <option value="4">Día 4 (Pierna / Posterior)</option>
+                        <option value="5">Día 5 (Brazos / Accesorios)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Nombre del Ejercicio *</label>
+                    <input type="text" id="ejercicio-form-nombre" required placeholder="ej. Press de Banca Plano" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Series *</label>
+                        <input type="number" id="ejercicio-form-series" required value="4" min="1" max="20" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white text-center focus:border-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Repeticiones *</label>
+                        <input type="text" id="ejercicio-form-reps" required value="8-10" placeholder="ej. 8-10 o 12" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white text-center focus:border-emerald-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">1RM de Referencia (kg, opcional)</label>
+                    <input type="number" step="0.5" id="ejercicio-form-1rm" placeholder="ej. 100 kg" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-cyan-500 outline-none">
+                </div>
+
+                <!-- Selector Desplegable Dinámico de Imágenes Locales -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Imagen o GIF del Ejercicio</label>
+                    <select id="ejercicio-form-imagen-url" onchange="actualizarPreviewImagenEjercicio(this.value)" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-xs sm:text-sm text-white focus:border-emerald-500 outline-none cursor-pointer">
+                        <option value="assets/ejercicios/default.gif">-- Seleccionar Imagen de la Galería --</option>
+                    </select>
+
+                    <div class="mt-2.5 flex items-center gap-3 p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+                        <div class="w-16 h-16 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center flex-shrink-0">
+                            <img id="ejercicio-img-preview" src="assets/ejercicios/default.gif" alt="Vista Previa" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='assets/ejercicios/default.gif';">
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-tight">
+                            Selecciona una demostración visual de la galería local para este ejercicio.
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Detalle / Indicaciones Técnicas</label>
+                    <textarea id="ejercicio-form-obs" rows="2" placeholder="Tempo 3-0-1-0, pausa abajo, retracción escapular..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-3 text-xs text-white focus:border-emerald-500 outline-none resize-none"></textarea>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800 flex justify-end gap-3">
+                    <button type="button" onclick="cerrarModalEjercicio()" class="py-2.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">Cancelar</button>
+                    <button type="submit" class="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 transition">Guardar Ejercicio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 8: ACTUALIZAR PESO RÁPIDO (1-TAP) -->
+    <div id="modal-peso" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-xs rounded-3xl p-5 shadow-2xl text-center max-h-[90vh] overflow-y-auto">
+            <h3 class="text-base font-black text-white mb-1">Actualizar Peso Corporal</h3>
+            <p class="text-xs text-slate-400 mb-4">Ingresa el pesaje actual en kg</p>
+            
+            <div class="relative my-4">
+                <input type="number" step="0.1" id="input-peso-rapido" class="w-full h-14 bg-slate-950 border-2 border-emerald-500/40 focus:border-emerald-400 rounded-2xl text-center text-3xl font-black text-emerald-400 outline-none" placeholder="00.0">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-slate-500 text-sm">kg</span>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" onclick="cerrarModalPesoRapido()" class="flex-1 py-2.5 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs">Cancelar</button>
+                <button type="button" onclick="guardarPesoRapido()" class="flex-1 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/25">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- 4. SPINNER Y TOASTS GLOBALES                                         -->
+    <!-- ==================================================================== -->
+    <div id="global-loader" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center hidden pointer-events-none">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center space-x-3 shadow-2xl">
+            <div class="w-5 h-5 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></div>
+            <span class="text-xs font-bold text-slate-300">Cargando...</span>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 w-11/12 max-w-sm flex flex-col items-center gap-2"></div>
+
+    <!-- Script Principal Frontend -->
+    <script src="js/app.js"></script>
+</body>
+</html>
