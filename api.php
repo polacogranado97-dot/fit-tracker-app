@@ -143,12 +143,23 @@ try {
             // Si es Admin, retorna únicamente los clientes activos vinculados a su sesión (Multi-Tenant)
             // Si es Cliente, retorna únicamente su propio perfil.
             $currentUser = requireAuth();
+            $queryBusqueda = isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['buscar']) ? trim($_GET['buscar']) : '');
             if ($currentUser['rol'] === 'admin') {
-                $stmt = $pdo->prepare("SELECT id, nombre, apellido, email, telefono, peso_corporal, observaciones, foto_perfil, rol, admin_id, activo, created_at 
-                                       FROM usuarios 
-                                       WHERE rol = 'cliente' AND activo = 1 AND (admin_id = ? OR admin_id IS NULL)
-                                       ORDER BY nombre ASC, apellido ASC");
-                $stmt->execute([(int)$currentUser['id']]);
+                $sql = "SELECT id, nombre, apellido, email, telefono, peso_corporal, observaciones, foto_perfil, rol, admin_id, activo, created_at 
+                        FROM usuarios 
+                        WHERE rol = 'cliente' AND activo = 1 AND (admin_id = ? OR admin_id IS NULL)";
+                $params = [(int)$currentUser['id']];
+                if ($queryBusqueda !== '') {
+                    $sql .= " AND (LOWER(nombre) LIKE ? OR LOWER(apellido) LIKE ? OR LOWER(CONCAT(nombre, ' ', apellido)) LIKE ? OR LOWER(email) LIKE ?)";
+                    $term = '%' . mb_strtolower($queryBusqueda, 'UTF-8') . '%';
+                    $params[] = $term;
+                    $params[] = $term;
+                    $params[] = $term;
+                    $params[] = $term;
+                }
+                $sql .= " ORDER BY nombre ASC, apellido ASC";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
                 $clientes = $stmt->fetchAll();
             } else {
                 $stmt = $pdo->prepare("SELECT id, nombre, apellido, email, telefono, peso_corporal, observaciones, foto_perfil, rol, admin_id, activo, created_at 
@@ -164,11 +175,25 @@ try {
             // Gestión de usuarios: Solo para Administradores, aislado a su propio tenant
             $currentUser = requireAdmin();
             $adminId = (int)$currentUser['id'];
-            $stmt = $pdo->prepare("SELECT id, nombre, apellido, email, rol, admin_id, peso_corporal, telefono, observaciones, foto_perfil, activo, created_at 
-                                   FROM usuarios 
-                                   WHERE admin_id = ? OR id = ? 
-                                   ORDER BY rol ASC, nombre ASC");
-            $stmt->execute([$adminId, $adminId]);
+            $queryBusqueda = isset($_GET['q']) ? trim($_GET['q']) : (isset($_GET['buscar']) ? trim($_GET['buscar']) : '');
+
+            $sql = "SELECT id, nombre, apellido, email, rol, admin_id, peso_corporal, telefono, observaciones, foto_perfil, activo, created_at 
+                    FROM usuarios 
+                    WHERE (admin_id = ? OR admin_id IS NULL OR id = ?)";
+            $params = [$adminId, $adminId];
+
+            if ($queryBusqueda !== '') {
+                $sql .= " AND (LOWER(nombre) LIKE ? OR LOWER(apellido) LIKE ? OR LOWER(CONCAT(nombre, ' ', apellido)) LIKE ? OR LOWER(email) LIKE ?)";
+                $term = '%' . mb_strtolower($queryBusqueda, 'UTF-8') . '%';
+                $params[] = $term;
+                $params[] = $term;
+                $params[] = $term;
+                $params[] = $term;
+            }
+
+            $sql .= " ORDER BY rol ASC, nombre ASC";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
             $usuarios = $stmt->fetchAll();
             sendJsonResponse(true, $usuarios);
             break;

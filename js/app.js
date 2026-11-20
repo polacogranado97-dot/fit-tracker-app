@@ -940,7 +940,7 @@ async function cargarFotosProgreso(usuarioId) {
         const res = await fetch(endpoint);
         const json = await res.json();
         if (json.success) {
-            AppState.fotosProgreso = json.data;
+            AppState.fotosProgreso = Array.isArray(json.data) ? json.data : (json.data && json.data.fotos ? json.data.fotos : []);
             renderGaleriaFotos();
         } else {
             mostrarToast(json.message || 'Error al obtener fotos', 'error');

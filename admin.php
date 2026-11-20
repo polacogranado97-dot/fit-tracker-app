@@ -205,8 +205,11 @@ $currentUser = getCurrentUser();
             </div>
 
             <!-- Buscador para alto rendimiento con +100 alumnos -->
-            <div class="relative">
-                <input type="text" id="admin-buscar-usuario" oninput="filtrarListaUsuariosAdmin(this.value)" placeholder="🔍 Buscar atleta por nombre o email (+100 alumnos)..." class="w-full h-11 bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-xl px-3.5 text-xs text-white outline-none">
+            <div class="relative flex items-center">
+                <input type="text" id="admin-buscar-usuario" oninput="filtrarListaUsuariosAdmin(this.value)" placeholder="🔍 Buscar atleta por nombre o email (+100 alumnos)..." class="w-full h-11 bg-slate-900 border border-slate-700 focus:border-cyan-500 rounded-xl pl-3.5 pr-9 text-xs text-white outline-none transition">
+                <button type="button" id="admin-btn-limpiar-busqueda-usr" onclick="limpiarBuscadorUsuariosAdmin()" class="hidden absolute right-3 text-slate-400 hover:text-white p-1 rounded-lg transition" title="Limpiar búsqueda">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
 
             <div id="admin-lista-usuarios" class="space-y-2"></div>
@@ -444,6 +447,49 @@ $currentUser = getCurrentUser();
         </div>
     </div>
 
+    <!-- MODAL 5: VISOR DETALLE DE FOTO INDIVIDUAL EN MODO SOLO LECTURA (COACH) -->
+    <div id="modal-foto-detalle" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 hidden" onclick="cerrarModalFotoDetalle()">
+        <div class="modal-content-animated bg-slate-900 border border-slate-800 w-11/12 max-w-sm sm:max-w-md rounded-3xl p-5 shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                <div class="flex items-center space-x-2">
+                    <span class="p-1.5 rounded-xl bg-cyan-500/20 text-cyan-400 font-black text-xs">📷</span>
+                    <h4 id="foto-detalle-titulo" class="text-sm sm:text-base font-black text-white">Detalle de Foto de Progreso</h4>
+                </div>
+                <button type="button" onclick="cerrarModalFotoDetalle()" class="p-1.5 text-slate-400 hover:text-white rounded-lg transition" title="Cerrar">✕</button>
+            </div>
+            
+            <!-- Contenedor de la foto ampliada -->
+            <div class="aspect-photo bg-slate-950 rounded-2xl overflow-hidden mb-3 border border-slate-800/80 flex items-center justify-center relative">
+                <img id="foto-detalle-img" src="" alt="Foto de Progreso" class="w-full h-full object-contain" onerror="this.onerror=null; this.src='assets/ejercicios/default.gif';">
+                <div class="absolute top-2.5 left-2.5 flex gap-1.5">
+                    <span id="foto-detalle-tag-semana" class="px-2 py-0.5 rounded-lg text-[10px] font-black bg-slate-950/90 text-cyan-400 border border-cyan-500/40 shadow">S1</span>
+                    <span id="foto-detalle-tag-angulo" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-slate-950/90 text-slate-200 capitalize border border-slate-700 shadow">Frente</span>
+                </div>
+            </div>
+
+            <!-- Datos informativos -->
+            <div class="space-y-2 bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800/60 text-xs">
+                <div class="flex items-center justify-between text-slate-400 text-[11px] pb-1.5 border-b border-slate-800/50">
+                    <span>Fecha de registro:</span>
+                    <span id="foto-detalle-fecha" class="text-white font-mono font-bold">--</span>
+                </div>
+                <div>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Notas / Observaciones del Atleta:</span>
+                    <p id="foto-detalle-obs" class="text-slate-300 leading-relaxed italic bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/40">Sin notas registradas.</p>
+                </div>
+            </div>
+
+            <!-- Pie del modal: estrictamente solo lectura (sin botón de eliminar) -->
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between">
+                <span class="text-[11px] text-cyan-400/80 font-medium flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    <span>Modo Solo Lectura (Coach)</span>
+                </span>
+                <button type="button" onclick="cerrarModalFotoDetalle()" class="py-2 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST CONTAINER & LOADER -->
     <div id="admin-toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 w-11/12 max-w-sm flex flex-col items-center gap-2 z-50 pointer-events-none"></div>
     <div id="admin-loader" class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-[2px] flex items-center justify-center hidden pointer-events-none">
@@ -483,6 +529,7 @@ $currentUser = getCurrentUser();
             setupAdminListeners();
             await cargarAlumnosAdmin();
             await cargarImagenesLocalesAdmin();
+            cargarListaUsuariosAdmin();
         });
 
         function setupAdminListeners() {
@@ -651,13 +698,23 @@ $currentUser = getCurrentUser();
 
             AdminState.fotosProgreso.forEach(foto => {
                 const card = document.createElement('div');
-                card.className = 'bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg';
+                card.className = 'bg-slate-900 border border-slate-800 hover:border-cyan-500/40 rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-200 select-none';
+                card.setAttribute('role', 'button');
+                card.setAttribute('tabindex', '0');
+                card.onclick = () => verFotoDetalle(foto.id);
+                card.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); verFotoDetalle(foto.id); } };
                 card.innerHTML = `
                     <div class="aspect-photo bg-slate-950 relative overflow-hidden">
-                        <img src="${foto.ruta_imagen}" alt="Foto S${foto.semana}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='assets/ejercicios/default.gif';">
-                        <div class="absolute top-2 left-2 flex gap-1">
+                        <img src="${foto.ruta_imagen}" alt="Foto S${foto.semana}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.src='assets/ejercicios/default.gif';">
+                        <div class="absolute top-2 left-2 flex gap-1 z-10">
                             <span class="px-2 py-0.5 rounded text-[10px] font-black bg-slate-950/80 text-cyan-400 border border-cyan-500/30">S${foto.semana}</span>
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-950/80 text-slate-300 capitalize border border-slate-700">${foto.tipo_angulo}</span>
+                        </div>
+                        <div class="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span class="px-2.5 py-1 rounded-xl bg-slate-950/90 text-cyan-300 border border-cyan-500/40 text-[11px] font-bold flex items-center space-x-1 shadow-lg">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                                <span>Ver 🔍</span>
+                            </span>
                         </div>
                     </div>
                     <div class="p-2.5 text-xs">
@@ -667,6 +724,38 @@ $currentUser = getCurrentUser();
                 `;
                 container.appendChild(card);
             });
+        }
+
+        function verFotoDetalle(fotoId) {
+            const foto = (AdminState.fotosProgreso || []).find(f => f.id == fotoId);
+            if (!foto) return;
+
+            const modal = document.getElementById('modal-foto-detalle');
+            if (!modal) return;
+
+            const img = document.getElementById('foto-detalle-img');
+            const titulo = document.getElementById('foto-detalle-titulo');
+            const fecha = document.getElementById('foto-detalle-fecha');
+            const obs = document.getElementById('foto-detalle-obs');
+            const tagSemana = document.getElementById('foto-detalle-tag-semana');
+            const tagAngulo = document.getElementById('foto-detalle-tag-angulo');
+
+            if (img) img.src = foto.ruta_imagen || 'assets/ejercicios/default.gif';
+            if (titulo) {
+                const anguloText = foto.tipo_angulo ? (foto.tipo_angulo.charAt(0).toUpperCase() + foto.tipo_angulo.slice(1)) : 'Detalle';
+                titulo.textContent = `Semana ${foto.semana} • Vista ${anguloText}`;
+            }
+            if (fecha) fecha.textContent = foto.fecha_subida || '--';
+            if (obs) obs.textContent = (foto.observaciones && foto.observaciones.trim() !== '') ? foto.observaciones : 'Sin notas u observaciones registradas por el atleta.';
+            if (tagSemana) tagSemana.textContent = `S${foto.semana}`;
+            if (tagAngulo) tagAngulo.textContent = foto.tipo_angulo || 'Ángulo';
+
+            modal.classList.remove('hidden');
+        }
+
+        function cerrarModalFotoDetalle() {
+            const modal = document.getElementById('modal-foto-detalle');
+            if (modal) modal.classList.add('hidden');
         }
 
         function renderSemanasAdmin() {
@@ -836,13 +925,20 @@ $currentUser = getCurrentUser();
             if (pestana === 'usuarios') { cargarListaUsuariosAdmin(); }
         }
 
-        async function cargarListaUsuariosAdmin() {
+        function normalizarTexto(txt) {
+            return (txt || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+        }
+
+        async function cargarListaUsuariosAdmin(query = '') {
             mostrarLoader(true);
             try {
-                const res = await fetch('api.php?action=usuarios');
+                const url = query ? `api.php?action=usuarios&q=${encodeURIComponent(query)}` : 'api.php?action=usuarios';
+                const res = await fetch(url);
                 const json = await res.json();
                 if (json.success && Array.isArray(json.data)) {
-                    AdminState.listaUsuariosCache = json.data;
+                    if (!query) {
+                        AdminState.listaUsuariosCache = json.data;
+                    }
                     renderListaUsuariosAdmin(json.data);
                 }
             } catch (err) {
@@ -852,18 +948,45 @@ $currentUser = getCurrentUser();
             }
         }
 
+        function limpiarBuscadorUsuariosAdmin() {
+            const input = document.getElementById('admin-buscar-usuario');
+            if (input) {
+                input.value = '';
+                filtrarListaUsuariosAdmin('');
+                input.focus();
+            }
+        }
+
         function filtrarListaUsuariosAdmin(query) {
-            query = (query || '').toLowerCase().trim();
-            if (!AdminState.listaUsuariosCache) return;
-            if (!query) {
+            const btnLimpiar = document.getElementById('admin-btn-limpiar-busqueda-usr');
+            const qTrim = (query || '').trim();
+            if (btnLimpiar) {
+                if (qTrim) btnLimpiar.classList.remove('hidden');
+                else btnLimpiar.classList.add('hidden');
+            }
+
+            const qNorm = normalizarTexto(query);
+
+            // Si el cache aún no se cargó, cargar desde el backend
+            if (!AdminState.listaUsuariosCache || AdminState.listaUsuariosCache.length === 0) {
+                cargarListaUsuariosAdmin(qTrim);
+                return;
+            }
+
+            if (!qNorm) {
                 renderListaUsuariosAdmin(AdminState.listaUsuariosCache);
                 return;
             }
+
             const filtrados = AdminState.listaUsuariosCache.filter(u => {
-                const nom = (u.nombre + ' ' + u.apellido).toLowerCase();
-                const mail = (u.email || '').toLowerCase();
-                return nom.includes(query) || mail.includes(query);
+                const nomCompleto = normalizarTexto(`${u.nombre || ''} ${u.apellido || ''}`);
+                const nomInvertido = normalizarTexto(`${u.apellido || ''} ${u.nombre || ''}`);
+                const emailNorm = normalizarTexto(u.email);
+                const telNorm = normalizarTexto(u.telefono);
+                const rolNorm = normalizarTexto(u.rol);
+                return nomCompleto.includes(qNorm) || nomInvertido.includes(qNorm) || emailNorm.includes(qNorm) || telNorm.includes(qNorm) || rolNorm.includes(qNorm);
             });
+
             renderListaUsuariosAdmin(filtrados);
         }
 
