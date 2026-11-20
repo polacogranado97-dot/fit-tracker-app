@@ -107,11 +107,100 @@ function establecerUsuarioAutenticado(user) {
 function mostrarVistaLogin() {
     document.getElementById('view-login').classList.remove('hidden');
     document.getElementById('view-app').classList.add('hidden');
+    cambiarModoAuth('login');
 }
 
 function mostrarVistaApp() {
     document.getElementById('view-login').classList.add('hidden');
     document.getElementById('view-app').classList.remove('hidden');
+}
+
+function cambiarModoAuth(modo) {
+    const formLogin = document.getElementById('form-login');
+    const formRegistro = document.getElementById('form-registro');
+    const tabLogin = document.getElementById('tab-btn-login');
+    const tabRegistro = document.getElementById('tab-btn-registro');
+    const subtitulo = document.getElementById('auth-subtitulo');
+
+    if (!formLogin || !formRegistro) return;
+
+    if (modo === 'registro') {
+        formLogin.classList.add('hidden');
+        formRegistro.classList.remove('hidden');
+        if (tabLogin && tabRegistro) {
+            tabLogin.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 text-slate-400 hover:text-white';
+            tabRegistro.className = 'flex-1 py-2 text-xs font-black rounded-xl transition-all duration-200 bg-emerald-500 text-slate-950 shadow-md';
+        }
+        if (subtitulo) {
+            subtitulo.textContent = 'Crea tu cuenta de atleta y comienza a registrar tu evolución';
+        }
+    } else {
+        formRegistro.classList.add('hidden');
+        formLogin.classList.remove('hidden');
+        if (tabLogin && tabRegistro) {
+            tabRegistro.className = 'flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 text-slate-400 hover:text-white';
+            tabLogin.className = 'flex-1 py-2 text-xs font-black rounded-xl transition-all duration-200 bg-emerald-500 text-slate-950 shadow-md';
+        }
+        if (subtitulo) {
+            subtitulo.textContent = 'Ingresa para acceder a tus microciclos y fotos de progreso';
+        }
+    }
+}
+
+/**
+ * Procesa el registro de una nueva cuenta pública (Solo Rol Cliente)
+ */
+async function procesarRegistro() {
+    const nombre = document.getElementById('registro-nombre')?.value.trim() || '';
+    const apellido = document.getElementById('registro-apellido')?.value.trim() || '';
+    const email = document.getElementById('registro-email')?.value.trim() || '';
+    const password = document.getElementById('registro-password')?.value || '';
+    const peso = parseFloat(document.getElementById('registro-peso')?.value) || 70.0;
+    const telefono = document.getElementById('registro-telefono')?.value.trim() || '';
+
+    if (!nombre || !apellido || !email || !password) {
+        mostrarToast('Nombre, apellido, email y contraseña son obligatorios', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        mostrarToast('La contraseña debe tener al menos 6 caracteres', 'error');
+        return;
+    }
+
+    mostrarCargando(true);
+    try {
+        const res = await fetch(`${API_URL}?action=registro`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                nombre,
+                apellido,
+                email,
+                password,
+                peso_corporal: peso,
+                telefono
+            })
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            mostrarToast('¡Cuenta creada con éxito! Bienvenido, ' + (json.data?.nombre || nombre), 'success');
+            if (json.data && json.data.id) {
+                establecerUsuarioAutenticado(json.data);
+                mostrarVistaApp();
+                await cargarDatosIniciales();
+            } else {
+                await procesarLogin(email, password);
+            }
+        } else {
+            mostrarToast(json.message || 'Error al registrar la cuenta', 'error');
+        }
+    } catch (err) {
+        mostrarToast('Error de red al conectar con el servidor', 'error');
+    } finally {
+        mostrarCargando(false);
+    }
 }
 
 /**
@@ -1637,6 +1726,14 @@ function setupEventListeners() {
         });
     }
 
+    const formRegistro = document.getElementById('form-registro');
+    if (formRegistro) {
+        formRegistro.addEventListener('submit', (e) => {
+            e.preventDefault();
+            procesarRegistro();
+        });
+    }
+
     const selectCliente = document.getElementById('select-cliente');
     if (selectCliente) {
         selectCliente.addEventListener('change', (e) => {
@@ -1669,7 +1766,6 @@ function setupEventListeners() {
                 nombre: document.getElementById('cliente-form-nombre').value.trim(),
                 apellido: document.getElementById('cliente-form-apellido').value.trim(),
                 email: document.getElementById('cliente-form-email').value.trim(),
-                password: document.getElementById('cliente-form-password').value.trim(),
                 rol: (document.getElementById('cliente-form-rol')?.value) || 'cliente',
                 peso_corporal: parseFloat(document.getElementById('cliente-form-peso').value) || 70,
                 telefono: document.getElementById('cliente-form-telefono').value.trim(),

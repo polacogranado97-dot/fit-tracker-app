@@ -383,15 +383,9 @@ $currentUser = getCurrentUser();
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
-                        <input type="email" id="admin-usr-email" required placeholder="atleta@correo.com" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-cyan-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña</label>
-                        <input type="password" id="admin-usr-password" placeholder="Contraseña de acceso" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-cyan-500 outline-none">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
+                    <input type="email" id="admin-usr-email" required placeholder="atleta@correo.com" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-cyan-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -1262,7 +1256,6 @@ $currentUser = getCurrentUser();
                 nombre: document.getElementById('admin-usr-nombre').value.trim(),
                 apellido: document.getElementById('admin-usr-apellido').value.trim(),
                 email: document.getElementById('admin-usr-email').value.trim(),
-                password: document.getElementById('admin-usr-password').value.trim(),
                 rol: document.getElementById('admin-usr-rol').value,
                 peso_corporal: parseFloat(document.getElementById('admin-usr-peso').value) || 70,
                 telefono: document.getElementById('admin-usr-telefono').value.trim(),

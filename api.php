@@ -53,6 +53,66 @@ try {
             }
             break;
 
+        case 'registro':
+        case 'register':
+            // Registro público de usuario desde pantalla de login (SOLO ROL 'cliente')
+            $data = getJsonInput();
+            $nombre = trim($data['nombre'] ?? '');
+            $apellido = trim($data['apellido'] ?? '');
+            $email = trim(strtolower($data['email'] ?? ''));
+            $password = trim($data['password'] ?? '');
+            $peso = isset($data['peso_corporal']) ? (float)$data['peso_corporal'] : 70.0;
+            if ($peso <= 0) {
+                $peso = 70.0;
+            }
+            $telefono = trim($data['telefono'] ?? '');
+
+            if (empty($nombre) || empty($apellido) || empty($email) || empty($password)) {
+                sendJsonResponse(false, null, 'Nombre, apellido, correo electrónico y contraseña son obligatorios.', 400);
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                sendJsonResponse(false, null, 'El formato de correo electrónico ingresado no es válido.', 400);
+            }
+
+            if (strlen($password) < 6) {
+                sendJsonResponse(false, null, 'La contraseña debe contener al menos 6 caracteres.', 400);
+            }
+
+            // Validar que el email no esté repetido
+            $stmtEmail = $pdo->prepare("SELECT id FROM usuarios WHERE LOWER(email) = ?");
+            $stmtEmail->execute([$email]);
+            if ($stmtEmail->fetch()) {
+                sendJsonResponse(false, null, 'El correo electrónico ya se encuentra registrado por otro usuario.', 400);
+            }
+
+            // RESTRICCIÓN ESTRICTA DE ROLES:
+            // Forzar SIEMPRE rol 'cliente' (nunca 'admin') y activo = 1
+            $rol = 'cliente';
+            $activo = 1;
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+
+            $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, apellido, email, password_hash, rol, admin_id, peso_corporal, telefono, activo) 
+                                   VALUES (?, ?, ?, ?, ?, NULL, ?, ?, ?)");
+            $stmt->execute([$nombre, $apellido, $email, $hash, $rol, $peso, $telefono, $activo]);
+            $newUserId = (int)$pdo->lastInsertId();
+
+            // Inicializar automáticamente su primera rutina de 5 microciclos
+            $stmtR = $pdo->prepare("INSERT INTO rutinas_semana (cliente_id, nombre, descripcion, fecha_inicio, activo) 
+                                    VALUES (?, 'Mesociclo 1 (S1-S5)', 'Planificación inicial de 5 microciclos', CURDATE(), 1)");
+            $stmtR->execute([$newUserId]);
+
+            // Iniciar sesión inmediatamente para el usuario registrado
+            $loginRes = loginUser($email, $password);
+            if ($loginRes['success']) {
+                sendJsonResponse(true, $loginRes['user'], 'Cuenta creada con éxito. ¡Bienvenido a FitTracker Pro!');
+            } else {
+                $stmtGet = $pdo->prepare("SELECT id, nombre, apellido, email, rol, peso_corporal, telefono, activo FROM usuarios WHERE id = ?");
+                $stmtGet->execute([$newUserId]);
+                sendJsonResponse(true, $stmtGet->fetch(), 'Cuenta de atleta registrada con éxito.');
+            }
+            break;
+
         case 'logout':
             logoutUser();
             sendJsonResponse(true, null, 'Sesión cerrada correctamente.');
@@ -208,7 +268,7 @@ try {
             if ($id > 0) {
                 // Actualizar usuario existente
                 if (!empty($password)) {
-                    $hash = password_hash($password, PASSWORD_DEFAULT);
+                    $hash = password_hash($password, PASSWORD_BCRYPT);
                     $stmt = $pdo->prepare("UPDATE usuarios 
                                            SET nombre = ?, apellido = ?, email = ?, password_hash = ?, rol = ?, peso_corporal = ?, telefono = ?, observaciones = ?, activo = ? 
                                            WHERE id = ?");
@@ -221,14 +281,16 @@ try {
                 }
                 $mensaje = 'Usuario actualizado correctamente.';
             } else {
-                // Crear nuevo usuario (Solo Admin)
+                // Crear nuevo usuario (Solo Admin desde panel del coach)
                 if ($currentUser['rol'] !== 'admin') {
                     sendJsonResponse(false, null, 'Solo los administradores pueden crear nuevos usuarios.', 403);
                 }
+                // SIEMPRE rol 'cliente' al crear desde panel
+                $rol = 'cliente';
                 if (empty($password)) {
-                    $password = '123456'; // Contraseña temporal predeterminada si no se indica
+                    $password = 'cliente123'; // Contraseña por defecto asignada al crear alumno
                 }
-                $hash = password_hash($password, PASSWORD_DEFAULT);
+                $hash = password_hash($password, PASSWORD_BCRYPT);
 
                 // Multi-Tenant: Vincular obligatoriamente al admin actual
                 $adminIdAsignado = (int)$currentUser['id'];

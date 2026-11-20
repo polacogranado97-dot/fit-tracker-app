@@ -4,11 +4,11 @@
 -- Motor: MariaDB / MySQL (InnoDB con soporte UTF8mb4)
 -- ==============================================================================
 
-CREATE DATABASE IF NOT EXISTS `fit_tracker_db` 
-CHARACTER SET utf8mb4 
-COLLATE utf8mb4_unicode_ci;
+-- CREATE DATABASE IF NOT EXISTS `fit_tracker_db` 
+-- CHARACTER SET utf8mb4 
+-- COLLATE utf8mb4_unicode_ci;
 
-USE `fit_tracker_db`;
+-- USE `fit_tracker_db`;
 
 -- Desactivar temporalmente restricciones foráneas para reconstrucción limpia
 SET FOREIGN_KEY_CHECKS = 0;
@@ -46,6 +46,24 @@ CREATE TABLE `usuarios` (
     INDEX `idx_usuarios_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+
+-- ------------------------------------------------------------------------------
+-- 2. TABLA: rutinas_semana (Microciclos de 5 semanas asignados al cliente)
+-- ------------------------------------------------------------------------------
+CREATE TABLE `rutinas_semana` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `cliente_id` INT NOT NULL COMMENT 'FK hacia usuarios.id (con rol cliente)',
+    `nombre` VARCHAR(150) NOT NULL DEFAULT 'Mesociclo Fuerza & Hipertrofia (S1-S5)',
+    `descripcion` TEXT NULL,
+    `fecha_inicio` DATE NULL,
+    `activo` TINYINT(1) NOT NULL DEFAULT 1,
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_rutina_usuario` FOREIGN KEY (`cliente_id`) 
+        REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    INDEX `idx_rutina_cliente` (`cliente_id`, `activo`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 -- ------------------------------------------------------------------------------
 -- 1.1 TABLA: rutina_calentamiento (Bloque de Movilidad Previa sin GIFs/imágenes)
 -- ------------------------------------------------------------------------------
@@ -67,24 +85,6 @@ CREATE VIEW `clientes` AS
     SELECT `id`, `nombre`, `apellido`, `email`, `telefono`, `peso_corporal`, `observaciones`, `activo`, `created_at`, `updated_at`
     FROM `usuarios` 
     WHERE `rol` = 'cliente';
-
--- ------------------------------------------------------------------------------
--- 2. TABLA: rutinas_semana (Microciclos de 5 semanas asignados al cliente)
--- ------------------------------------------------------------------------------
-CREATE TABLE `rutinas_semana` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `cliente_id` INT NOT NULL COMMENT 'FK hacia usuarios.id (con rol cliente)',
-    `nombre` VARCHAR(150) NOT NULL DEFAULT 'Mesociclo Fuerza & Hipertrofia (S1-S5)',
-    `descripcion` TEXT NULL,
-    `fecha_inicio` DATE NULL,
-    `activo` TINYINT(1) NOT NULL DEFAULT 1,
-    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_rutina_usuario` FOREIGN KEY (`cliente_id`) 
-        REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    INDEX `idx_rutina_cliente` (`cliente_id`, `activo`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- ------------------------------------------------------------------------------
 -- 3. TABLA: ejercicios_rutina (Con soporte de imagen demostrativa de técnica)
 -- ------------------------------------------------------------------------------

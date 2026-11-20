@@ -54,7 +54,9 @@ function loginUser(string $email, string $password): array {
     }
 
     // Regenerar ID de sesión para prevenir Session Fixation
-    session_regenerate_id(true);
+    if (!headers_sent()) {
+        session_regenerate_id(true);
+    }
 
     $_SESSION['user_id']     = (int)$user['id'];
     $_SESSION['user_email']  = $user['email'];

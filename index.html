@@ -56,10 +56,20 @@
                     </div>
                 </div>
                 <h1 class="text-2xl font-black text-white tracking-tight">FIT<span class="text-emerald-400">TRACKER</span> <span class="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">PRO</span></h1>
-                <p class="text-xs text-slate-400 mt-1">Ingresa para acceder a tus microciclos y fotos de progreso</p>
+                <p id="auth-subtitulo" class="text-xs text-slate-400 mt-1">Ingresa para acceder a tus microciclos y fotos de progreso</p>
             </div>
 
-            <!-- Formulario de Login -->
+            <!-- Pestañas de Alternancia: Iniciar Sesión / Crear Cuenta -->
+            <div class="flex p-1 bg-slate-950/80 rounded-2xl border border-slate-800 mb-5">
+                <button type="button" id="tab-btn-login" onclick="cambiarModoAuth('login')" class="flex-1 py-2 text-xs font-black rounded-xl transition-all duration-200 bg-emerald-500 text-slate-950 shadow-md">
+                    Iniciar Sesión
+                </button>
+                <button type="button" id="tab-btn-registro" onclick="cambiarModoAuth('registro')" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-200 text-slate-400 hover:text-white">
+                    Crear Cuenta
+                </button>
+            </div>
+
+            <!-- 1. Formulario de Login -->
             <form id="form-login" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico</label>
@@ -74,6 +84,59 @@
                 <button type="submit" class="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl shadow-lg shadow-emerald-500/25 transition touch-btn text-sm">
                     Iniciar Sesión
                 </button>
+
+                <div class="text-center pt-2">
+                    <p class="text-xs text-slate-400">¿No tienes una cuenta? <button type="button" onclick="cambiarModoAuth('registro')" class="text-emerald-400 font-bold hover:underline">Crear cuenta de atleta</button></p>
+                </div>
+            </form>
+
+            <!-- 2. Formulario de Registro Público (SOLO Rol Cliente / Atleta) -->
+            <form id="form-registro" class="space-y-3.5 hidden">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Nombre *</label>
+                        <input type="text" id="registro-nombre" required placeholder="Carlos" class="w-full h-11 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3 text-xs sm:text-sm text-white outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Apellido *</label>
+                        <input type="text" id="registro-apellido" required placeholder="Mendoza" class="w-full h-11 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3 text-xs sm:text-sm text-white outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Correo Electrónico *</label>
+                    <input type="email" id="registro-email" required placeholder="correo@ejemplo.com" class="w-full h-11 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3.5 text-xs sm:text-sm text-white outline-none transition">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña *</label>
+                    <input type="password" id="registro-password" required minlength="6" placeholder="Mínimo 6 caracteres" class="w-full h-11 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3.5 text-xs sm:text-sm text-white outline-none transition">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Peso Corporal (kg)</label>
+                        <input type="number" step="0.1" id="registro-peso" placeholder="70.0" class="w-full h-11 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3 text-xs sm:text-sm text-white outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">WhatsApp (opcional)</label>
+                        <input type="tel" id="registro-telefono" placeholder="+54 9 11..." class="w-full h-11 bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-3 text-xs sm:text-sm text-white outline-none transition">
+                    </div>
+                </div>
+
+                <div class="p-2 bg-slate-950/60 rounded-xl border border-slate-800">
+                    <p class="text-[11px] text-slate-400 leading-tight">
+                        Tu cuenta se registrará como <span class="text-emerald-400 font-bold">Atleta / Alumno</span> para tu seguimiento de cargas y evolución.
+                    </p>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 px-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl shadow-lg shadow-emerald-500/25 transition touch-btn text-sm">
+                    Crear Cuenta de Atleta
+                </button>
+
+                <div class="text-center pt-2">
+                    <p class="text-xs text-slate-400">¿Ya tienes una cuenta? <button type="button" onclick="cambiarModoAuth('login')" class="text-emerald-400 font-bold hover:underline">Iniciar sesión</button></p>
+                </div>
             </form>
         </div>
     </div>
@@ -511,15 +574,9 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
-                        <input type="email" id="cliente-form-email" required placeholder="atleta@correo.com" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-300 mb-1">Contraseña (opcional)</label>
-                        <input type="password" id="cliente-form-password" placeholder="Nueva contraseña" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Email *</label>
+                    <input type="email" id="cliente-form-email" required placeholder="atleta@correo.com" class="w-full h-11 bg-slate-950 border border-slate-700 rounded-xl px-3 text-sm text-white focus:border-emerald-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
