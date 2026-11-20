@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="bgSq" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" rx="16" fill="url(#bgSq)" stroke="#1e293b" stroke-width="2"/>
+  <text x="200" y="40" font-family="sans-serif" font-weight="bold" font-size="16" fill="#f8fafc" text-anchor="middle">Sentadilla Trasera con Barra</text>
+  <text x="200" y="65" font-family="sans-serif" font-size="12" fill="#10b981" text-anchor="middle">Profundidad paralela - Respiración Valsalva</text>
+  <!-- Suelo -->
+  <line x1="50" y1="265" x2="350" y2="265" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+  <!-- Figura esquemática en sentadilla profunda -->
+  <circle cx="200" cy="110" r="16" fill="#94a3b8"/>
+  <!-- Torso inclinado neutro -->
+  <line x1="200" y1="126" x2="185" y2="180" stroke="#94a3b8" stroke-width="14" stroke-linecap="round"/>
+  <!-- Muslos paralelos -->
+  <line x1="185" y1="180" x2="225" y2="185" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
+  <!-- Pierna inferior a los pies -->
+  <line x1="225" y1="185" x2="215" y2="260" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
+  <!-- Pies -->
+  <line x1="205" y1="260" x2="235" y2="260" stroke="#475569" stroke-width="8" stroke-linecap="round"/>
+  <!-- Barra sobre trapecios -->
+  <line x1="120" y1="130" x2="280" y2="130" stroke="#06b6d4" stroke-width="8" stroke-linecap="round"/>
+  <rect x="125" y="105" width="14" height="50" rx="3" fill="#10b981"/>
+  <rect x="261" y="105" width="14" height="50" rx="3" fill="#10b981"/>
+</svg>

@@ -1,0 +1,6 @@
+Guías descubiertas/procesadas: 157
+Candidatas únicas: 177
+Imágenes descargadas: 173
+Fallos/avisos: 4
+Métodos: requests/BeautifulSoup + Playwright DOM, lazy-load, recursos de red y controles de galería.
+Ver download_failures.csv para detalles; revisar el manifiesto para filtrar posibles imágenes no pertinentes.

@@ -1,0 +1,4 @@
+INFORME DE ESTA SESIÓN
+Se revisó la página pública mediante un resultado web indexado. La página lista categorías y enlaces a numerosas guías individuales; las guías individuales contienen instrucciones de ejercicio. La conexión directa desde el entorno de ejecución Python de esta conversación no está disponible, por lo que no se pudieron probar peticiones requests ni descargar imágenes reales aquí.
+Esta segunda versión añade Playwright para navegador real, lazy loading, recursos de red y controles de galería, además de extracción estática de src/srcset/data-* y CSS.
+No se afirma que se hayan descargado imágenes en esta sesión. Para generar el ZIP real, ejecutar el script en un PC con Internet siguiendo README.md.

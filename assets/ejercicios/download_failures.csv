@@ -1,0 +1,5 @@
+﻿exercise_or_guide,page_url,image_url,reason
+Pectorales,https://www.simplyfitness.com/es/pages/chest-exercise-guides,https://cdn.shopify.com/shopifycloud/shop-js,HTTPError: 404 Client Error: Not Found for url: https://cdn.shopify.com/shopifycloud/shop-js
+Pectorales,https://www.simplyfitness.com/es/pages/chest-exercise-guides,https://cdn.shopify.com/shopifycloud/shop-js/modules/v2/loader.init-shop-cart-sync.es.esm.js,"ValueError: El servidor devolvió Content-Type text/javascript, no una imagen"
+Pectorales,https://www.simplyfitness.com/es/pages/chest-exercise-guides,https://cdn.shopify.com/shopifycloud/storefront-forms-hcaptcha/ce_storefront_forms_captcha_hcaptcha.v1.5.3.iife.js,"ValueError: El servidor devolvió Content-Type text/javascript, no una imagen"
+Pectorales,https://www.simplyfitness.com/es/pages/chest-exercise-guides,https://cdn.shopify.com/storefront/standard-actions.js,"ValueError: El servidor devolvió Content-Type text/javascript, no una imagen"

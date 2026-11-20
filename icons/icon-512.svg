@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bg)"/>
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#grad)" stroke-width="8" opacity="0.3"/>
+  <g fill="url(#grad)">
+    <!-- Mancuerna estilizada -->
+    <rect x="70" y="196" width="30" height="120" rx="10"/>
+    <rect x="115" y="156" width="35" height="200" rx="12"/>
+    <rect x="160" y="236" width="192" height="40" rx="8"/>
+    <rect x="362" y="156" width="35" height="200" rx="12"/>
+    <rect x="412" y="196" width="30" height="120" rx="10"/>
+    <!-- Relámpago de energía central -->
+    <path d="M266 170 L230 260 L275 260 L246 342 L300 240 L260 240 Z" fill="#ffffff" opacity="0.95"/>
+  </g>
+</svg>

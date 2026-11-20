@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" rx="16" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
+  <text x="200" y="40" font-family="sans-serif" font-weight="bold" font-size="16" fill="#f8fafc" text-anchor="middle">Peso Muerto Rumano</text>
+  <text x="200" y="65" font-family="sans-serif" font-size="12" fill="#10b981" text-anchor="middle">Bisagra de cadera - Isquiosurales tensos</text>
+  <line x1="50" y1="265" x2="350" y2="265" stroke="#334155" stroke-width="4" stroke-linecap="round"/>
+  <!-- Cabeza y columna alineada neutra -->
+  <circle cx="160" cy="130" r="15" fill="#94a3b8"/>
+  <line x1="165" y1="145" x2="215" y2="175" stroke="#94a3b8" stroke-width="14" stroke-linecap="round"/>
+  <!-- Cadera retrasada -->
+  <line x1="215" y1="175" x2="225" y2="215" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
+  <line x1="225" y1="215" x2="220" y2="260" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
+  <!-- Brazos rectos hacia abajo -->
+  <line x1="180" y1="155" x2="190" y2="215" stroke="#64748b" stroke-width="10" stroke-linecap="round"/>
+  <!-- Barra -->
+  <line x1="130" y1="215" x2="250" y2="215" stroke="#06b6d4" stroke-width="8" stroke-linecap="round"/>
+  <rect x="135" y="190" width="12" height="50" rx="3" fill="#10b981"/>
+  <rect x="233" y="190" width="12" height="50" rx="3" fill="#10b981"/>
+</svg>
