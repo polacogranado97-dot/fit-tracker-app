@@ -12,7 +12,11 @@ define('DB_PORT', getenv('DB_PORT') ?: '3306');
 define('DB_NAME', getenv('DB_NAME') ?: 'fit_tracker_db');
 define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
+<<<<<<< HEAD
 define('DB_CHARSET', 'utf8mb4');
+=======
+define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
+>>>>>>> c4d8478ea0b490aaaa95c197f25164632d5283e6
 
 /**
  * Obtiene la instancia singleton de la conexión PDO.
