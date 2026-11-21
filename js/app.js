@@ -317,28 +317,183 @@ function cambiarVistaPrincipal(vista) {
     }
 }
 
-function actualizarSelectoresCliente() {
-    const select = document.getElementById('select-cliente');
-    if (!select) return;
+function normalizarTextoApp(txt) {
+    return (txt || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
 
-    select.innerHTML = '';
+function asegurarBuscadorClienteTopApp() {
+    let input = document.getElementById('buscar-cliente-top');
+    if (input) return input;
+
+    // Fallback automático si el navegador cargó un index.html cacheado con <select id="select-cliente">
+    const oldSelect = document.getElementById('select-cliente');
+    if (oldSelect && oldSelect.parentElement) {
+        const container = oldSelect.parentElement;
+        container.id = 'buscador-cliente-top-wrapper';
+        container.className = 'admin-only relative flex-1 sm:flex-initial sm:w-60';
+        container.innerHTML = `
+            <div class="relative flex items-center">
+                <input
+                    type="text"
+                    id="buscar-cliente-top"
+                    placeholder="Buscar o elegir alumno..."
+                    autocomplete="off"
+                    oninput="filtrarClientesTopApp(this.value)"
+                    onfocus="filtrarClientesTopApp(this.value)"
+                    onclick="filtrarClientesTopApp(this.value)"
+                    class="w-full bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 text-xs font-bold text-white rounded-xl pl-2.5 pr-12 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 transition truncate"
+                />
+                <div class="absolute right-2 flex items-center gap-1">
+                    <button
+                        type="button"
+                        id="btn-limpiar-cliente-top"
+                        onclick="limpiarBuscadorClienteTopApp()"
+                        class="hidden text-slate-400 hover:text-white p-0.5 rounded transition"
+                        title="Limpiar búsqueda"
+                    >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                    <button
+                        type="button"
+                        onclick="toggleDropdownClientesTopApp()"
+                        class="text-slate-400 hover:text-emerald-400 p-0.5 rounded transition"
+                        title="Ver lista de alumnos"
+                    >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                </div>
+            </div>
+            <div
+                id="resultados-cliente-top"
+                class="hidden absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-xl bg-slate-900 border border-slate-700 shadow-2xl z-50"
+            ></div>
+        `;
+        input = document.getElementById('buscar-cliente-top');
+    }
+    return input;
+}
+
+function toggleDropdownClientesTopApp() {
+    const dropdown = document.getElementById('resultados-cliente-top');
+    const input = asegurarBuscadorClienteTopApp();
+    if (!dropdown) return;
+    if (!dropdown.classList.contains('hidden')) {
+        dropdown.classList.add('hidden');
+    } else {
+        filtrarClientesTopApp(input ? input.value : '');
+        if (input) input.focus();
+    }
+}
+
+function actualizarSelectoresCliente() {
+    const input = asegurarBuscadorClienteTopApp();
+    if (!input) return;
+
     if (!AppState.clientes || AppState.clientes.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'Sin alumnos activos';
-        select.appendChild(option);
+        input.value = '';
+        input.placeholder = 'Sin alumnos activos';
         return;
     }
 
-    AppState.clientes.forEach(cliente => {
-        const option = document.createElement('option');
-        option.value = cliente.id;
-        option.textContent = `${cliente.nombre} ${cliente.apellido}`;
-        if (cliente.id == AppState.clienteActivoId) {
-            option.selected = true;
+    const clienteSel = AppState.clientes.find(c => c.id == AppState.clienteActivoId) || AppState.clientes[0];
+    if (clienteSel) {
+        input.value = `${clienteSel.nombre || ''} ${clienteSel.apellido || ''}`.trim();
+    }
+}
+
+function filtrarClientesTopApp(texto) {
+    const dropdown = document.getElementById('resultados-cliente-top');
+    const btnLimpiar = document.getElementById('btn-limpiar-cliente-top');
+    if (!dropdown) return;
+
+    const lista = Array.isArray(AppState.clientes) ? AppState.clientes : [];
+    const qRaw = (texto || '').trim();
+    const qNorm = normalizarTextoApp(qRaw);
+
+    if (btnLimpiar) {
+        if (qRaw.length > 0) btnLimpiar.classList.remove('hidden');
+        else btnLimpiar.classList.add('hidden');
+    }
+
+    const clienteActualObj = lista.find(c => c.id == AppState.clienteActivoId);
+    const nombreActivoNorm = clienteActualObj
+        ? normalizarTextoApp(`${clienteActualObj.nombre || ''} ${clienteActualObj.apellido || ''}`)
+        : '';
+
+    const usarFiltro = qNorm.length > 0 && qNorm !== nombreActivoNorm;
+
+    const filtrados = usarFiltro
+        ? lista.filter(c => {
+            const nom = normalizarTextoApp(`${c.nombre || ''} ${c.apellido || ''}`);
+            const nomInv = normalizarTextoApp(`${c.apellido || ''} ${c.nombre || ''}`);
+            const email = normalizarTextoApp(c.email || '');
+            return nom.includes(qNorm) || nomInv.includes(qNorm) || email.includes(qNorm);
+        })
+        : lista;
+
+    if (filtrados.length === 0) {
+        dropdown.innerHTML = `<div class="px-3 py-2 text-xs text-slate-400">No se encontraron alumnos</div>`;
+        dropdown.classList.remove('hidden');
+        return;
+    }
+
+    dropdown.innerHTML = filtrados.map(c => {
+        const nombreCompleto = `${c.nombre || ''} ${c.apellido || ''}`.trim();
+        const esActivo = c.id == AppState.clienteActivoId;
+        return `
+            <button
+                type="button"
+                onclick="seleccionarClienteTopApp(${c.id})"
+                class="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center justify-between gap-2 border-b border-slate-800/70 last:border-b-0 transition ${esActivo ? 'bg-emerald-500/10 text-emerald-300' : 'text-slate-200'}"
+            >
+                <div class="min-w-0">
+                    <div class="font-bold text-white truncate">${escaparHtml(nombreCompleto)}</div>
+                    ${c.email ? `<div class="text-[11px] text-slate-400 truncate">${escaparHtml(c.email)}</div>` : ''}
+                </div>
+                ${esActivo ? '<span class="text-[10px] font-black text-emerald-400 flex-shrink-0">Activo</span>' : ''}
+            </button>
+        `;
+    }).join('');
+
+    dropdown.classList.remove('hidden');
+}
+
+function seleccionarClienteTopApp(nuevoId) {
+    const dropdown = document.getElementById('resultados-cliente-top');
+    const input = document.getElementById('buscar-cliente-top');
+    const clienteEncontrado = (AppState.clientes || []).find(c => c.id == nuevoId);
+
+    if (dropdown) dropdown.classList.add('hidden');
+    if (input && clienteEncontrado) {
+        input.value = `${clienteEncontrado.nombre || ''} ${clienteEncontrado.apellido || ''}`.trim();
+    }
+
+    nuevoId = parseInt(nuevoId);
+    if (nuevoId && nuevoId !== AppState.clienteActivoId) {
+        AppState.clienteActivoId = nuevoId;
+        if (clienteEncontrado) {
+            AppState.clienteActual = clienteEncontrado;
+            renderFichaCliente();
+        } else {
+            mostrarSkeletonFicha(true);
         }
-        select.appendChild(option);
-    });
+        if (AppState.activeView === 'rutina') {
+            cargarRutinaCliente(nuevoId, AppState.semanaActiva);
+        } else {
+            cargarFotosProgreso(nuevoId);
+        }
+    }
+}
+
+function limpiarBuscadorClienteTopApp() {
+    const input = document.getElementById('buscar-cliente-top');
+    const btnLimpiar = document.getElementById('btn-limpiar-cliente-top');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    if (btnLimpiar) btnLimpiar.classList.add('hidden');
+    filtrarClientesTopApp('');
 }
 
 function mostrarSkeletonFicha(mostrar) {
@@ -1734,27 +1889,13 @@ function setupEventListeners() {
         });
     }
 
-    const selectCliente = document.getElementById('select-cliente');
-    if (selectCliente) {
-        selectCliente.addEventListener('change', (e) => {
-            const nuevoId = parseInt(e.target.value);
-            if (nuevoId && nuevoId !== AppState.clienteActivoId) {
-                AppState.clienteActivoId = nuevoId;
-                const clienteEncontrado = AppState.clientes.find(c => c.id == nuevoId);
-                if (clienteEncontrado) {
-                    AppState.clienteActual = clienteEncontrado;
-                    renderFichaCliente();
-                } else {
-                    mostrarSkeletonFicha(true);
-                }
-                if (AppState.activeView === 'rutina') {
-                    cargarRutinaCliente(nuevoId, AppState.semanaActiva);
-                } else {
-                    cargarFotosProgreso(nuevoId);
-                }
-            }
-        });
-    }
+    document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('buscador-cliente-top-wrapper');
+        const dropdown = document.getElementById('resultados-cliente-top');
+        if (wrapper && dropdown && !wrapper.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
 
     const formCliente = document.getElementById('form-cliente');
     if (formCliente) {

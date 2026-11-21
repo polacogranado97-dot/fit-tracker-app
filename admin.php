@@ -78,15 +78,44 @@ $currentUser = getCurrentUser();
                 </div>
             </div>
 
-            <!-- Selector de Alumno a Supervisar y Botones Desktop -->
+            <!-- Buscador de Alumno a Supervisar y Botones Desktop -->
             <div class="flex items-center gap-2 w-full sm:w-auto">
-                <div class="relative flex-1 sm:flex-initial sm:w-60">
-                    <select id="admin-select-cliente" class="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-cyan-500/50 text-xs sm:text-sm font-bold text-white rounded-xl pl-3 pr-8 py-2 outline-none focus:ring-2 focus:ring-cyan-500/20 cursor-pointer transition truncate">
-                        <option value="">Cargando alumnos...</option>
-                    </select>
-                    <div class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <div id="admin-buscador-alumno-wrapper" class="relative flex-1 sm:flex-initial sm:w-64">
+                    <div class="relative flex items-center">
+                        <input
+                            type="text"
+                            id="admin-buscar-alumno-top"
+                            placeholder="Buscar o elegir alumno..."
+                            autocomplete="off"
+                            oninput="filtrarAlumnosTopAdmin(this.value)"
+                            onfocus="filtrarAlumnosTopAdmin(this.value)"
+                            onclick="filtrarAlumnosTopAdmin(this.value)"
+                            class="w-full bg-slate-900 border border-slate-700 hover:border-cyan-500/50 focus:border-cyan-400 text-xs sm:text-sm font-bold text-white rounded-xl pl-3 pr-14 py-2 outline-none focus:ring-2 focus:ring-cyan-500/20 transition truncate"
+                        />
+                        <div class="absolute right-2 flex items-center gap-1">
+                            <button
+                                type="button"
+                                id="admin-btn-limpiar-alumno-top"
+                                onclick="limpiarBuscadorAlumnoTopAdmin()"
+                                class="hidden text-slate-400 hover:text-white p-0.5 rounded transition"
+                                title="Limpiar búsqueda"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                            <button
+                                type="button"
+                                onclick="toggleDropdownAlumnosTopAdmin()"
+                                class="text-slate-400 hover:text-cyan-400 p-0.5 rounded transition"
+                                title="Ver lista de alumnos"
+                            >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                        </div>
                     </div>
+                    <div
+                        id="admin-resultados-alumno-top"
+                        class="hidden absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-xl bg-slate-900 border border-slate-700 shadow-2xl z-50"
+                    ></div>
                 </div>
 
                 <div class="hidden sm:flex items-center space-x-1.5 flex-shrink-0">
@@ -533,16 +562,13 @@ $currentUser = getCurrentUser();
         });
 
         function setupAdminListeners() {
-            const select = document.getElementById('admin-select-cliente');
-            if (select) {
-                select.addEventListener('change', async (e) => {
-                    const id = parseInt(e.target.value);
-                    if (id && id !== AdminState.alumnoActivoId) {
-                        AdminState.alumnoActivoId = id;
-                        await cargarDatosAlumnoSeleccionado(id);
-                    }
-                });
-            }
+            document.addEventListener('click', (e) => {
+                const wrapper = document.getElementById('admin-buscador-alumno-wrapper');
+                const dropdown = document.getElementById('admin-resultados-alumno-top');
+                if (wrapper && dropdown && !wrapper.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
 
             const formEj = document.getElementById('admin-form-ejercicio');
             if (formEj) {
@@ -605,19 +631,15 @@ $currentUser = getCurrentUser();
                 const json = await res.json();
                 if (json.success && Array.isArray(json.data) && json.data.length > 0) {
                     AdminState.alumnos = json.data;
-                    const select = document.getElementById('admin-select-cliente');
-                    select.innerHTML = '';
-                    json.data.forEach(al => {
-                        const opt = document.createElement('option');
-                        opt.value = al.id;
-                        opt.textContent = `${al.nombre} ${al.apellido}`;
-                        select.appendChild(opt);
-                    });
 
                     if (!AdminState.alumnoActivoId || !json.data.some(a => a.id == AdminState.alumnoActivoId)) {
                         AdminState.alumnoActivoId = json.data[0].id;
                     }
-                    select.value = AdminState.alumnoActivoId;
+                    const alumnoSel = json.data.find(a => a.id == AdminState.alumnoActivoId) || json.data[0];
+                    const inputBuscador = document.getElementById('admin-buscar-alumno-top');
+                    if (inputBuscador && alumnoSel) {
+                        inputBuscador.value = `${alumnoSel.nombre} ${alumnoSel.apellido}`.trim();
+                    }
                     await cargarDatosAlumnoSeleccionado(AdminState.alumnoActivoId);
                 } else {
                     document.getElementById('alumno-nombre').textContent = 'No hay alumnos activos';
@@ -630,6 +652,102 @@ $currentUser = getCurrentUser();
             } finally {
                 mostrarLoader(false);
             }
+        }
+
+        function filtrarAlumnosTopAdmin(texto) {
+            const dropdown = document.getElementById('admin-resultados-alumno-top');
+            const btnLimpiar = document.getElementById('admin-btn-limpiar-alumno-top');
+            if (!dropdown) return;
+
+            const lista = Array.isArray(AdminState.alumnos) ? AdminState.alumnos : [];
+            const qRaw = (texto || '').trim();
+            const qNorm = normalizarTexto(qRaw);
+
+            if (btnLimpiar) {
+                if (qRaw.length > 0) btnLimpiar.classList.remove('hidden');
+                else btnLimpiar.classList.add('hidden');
+            }
+
+            const alumnoActualObj = lista.find(a => a.id == AdminState.alumnoActivoId);
+            const nombreActivoNorm = alumnoActualObj
+                ? normalizarTexto(`${alumnoActualObj.nombre || ''} ${alumnoActualObj.apellido || ''}`)
+                : '';
+
+            const usarFiltro = qNorm.length > 0 && qNorm !== nombreActivoNorm;
+
+            const filtrados = usarFiltro
+                ? lista.filter(a => {
+                    const nom = normalizarTexto(`${a.nombre || ''} ${a.apellido || ''}`);
+                    const nomInv = normalizarTexto(`${a.apellido || ''} ${a.nombre || ''}`);
+                    const email = normalizarTexto(a.email || '');
+                    return nom.includes(qNorm) || nomInv.includes(qNorm) || email.includes(qNorm);
+                })
+                : lista;
+
+            if (filtrados.length === 0) {
+                dropdown.innerHTML = `<div class="px-3 py-2.5 text-xs text-slate-400">No se encontraron alumnos</div>`;
+                dropdown.classList.remove('hidden');
+                return;
+            }
+
+            dropdown.innerHTML = filtrados.map(a => {
+                const nombreCompleto = `${a.nombre || ''} ${a.apellido || ''}`.trim();
+                const esActivo = a.id == AdminState.alumnoActivoId;
+                return `
+                    <button
+                        type="button"
+                        onclick="seleccionarAlumnoTopAdmin(${a.id})"
+                        class="w-full text-left px-3 py-2 text-xs hover:bg-slate-800 flex items-center justify-between gap-2 border-b border-slate-800/70 last:border-b-0 transition ${esActivo ? 'bg-cyan-500/10 text-cyan-300' : 'text-slate-200'}"
+                    >
+                        <div class="min-w-0">
+                            <div class="font-bold text-white truncate">${escaparHtmlAdmin(nombreCompleto)}</div>
+                            ${a.email ? `<div class="text-[11px] text-slate-400 truncate">${escaparHtmlAdmin(a.email)}</div>` : ''}
+                        </div>
+                        ${esActivo ? '<span class="text-[10px] font-black text-cyan-400 flex-shrink-0">Activo</span>' : ''}
+                    </button>
+                `;
+            }).join('');
+
+            dropdown.classList.remove('hidden');
+        }
+
+        async function seleccionarAlumnoTopAdmin(id) {
+            const dropdown = document.getElementById('admin-resultados-alumno-top');
+            const input = document.getElementById('admin-buscar-alumno-top');
+            const alumno = (AdminState.alumnos || []).find(a => a.id == id);
+
+            if (dropdown) dropdown.classList.add('hidden');
+            if (input && alumno) {
+                input.value = `${alumno.nombre || ''} ${alumno.apellido || ''}`.trim();
+            }
+
+            if (id && id != AdminState.alumnoActivoId) {
+                AdminState.alumnoActivoId = parseInt(id);
+                await cargarDatosAlumnoSeleccionado(AdminState.alumnoActivoId);
+            }
+        }
+
+        function toggleDropdownAlumnosTopAdmin() {
+            const dropdown = document.getElementById('admin-resultados-alumno-top');
+            const input = document.getElementById('admin-buscar-alumno-top');
+            if (!dropdown) return;
+            if (!dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            } else {
+                filtrarAlumnosTopAdmin(input ? input.value : '');
+                if (input) input.focus();
+            }
+        }
+
+        function limpiarBuscadorAlumnoTopAdmin() {
+            const input = document.getElementById('admin-buscar-alumno-top');
+            const btnLimpiar = document.getElementById('admin-btn-limpiar-alumno-top');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            if (btnLimpiar) btnLimpiar.classList.add('hidden');
+            filtrarAlumnosTopAdmin('');
         }
 
         async function cargarDatosAlumnoSeleccionado(alumnoId) {

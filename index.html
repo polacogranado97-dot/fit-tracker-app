@@ -179,15 +179,44 @@
                     </div>
                 </div>
 
-                <!-- Selector de Cliente (Solo visible para Admin) y Acciones Desktop -->
+                <!-- Buscador de Cliente (Solo visible para Admin) y Acciones Desktop -->
                 <div class="flex items-center gap-1.5 w-full sm:w-auto">
-                    <div class="admin-only hidden relative flex-1 sm:flex-initial sm:w-48">
-                        <select id="select-cliente" class="w-full appearance-none bg-slate-900 border border-slate-700 hover:border-slate-600 text-xs font-bold text-white rounded-xl pl-2.5 pr-7 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 cursor-pointer transition truncate">
-                            <option value="">Cargando...</option>
-                        </select>
-                        <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <div id="buscador-cliente-top-wrapper" class="admin-only hidden relative flex-1 sm:flex-initial sm:w-60">
+                        <div class="relative flex items-center">
+                            <input
+                                type="text"
+                                id="buscar-cliente-top"
+                                placeholder="Buscar o elegir alumno..."
+                                autocomplete="off"
+                                oninput="filtrarClientesTopApp(this.value)"
+                                onfocus="filtrarClientesTopApp(this.value)"
+                                onclick="filtrarClientesTopApp(this.value)"
+                                class="w-full bg-slate-900 border border-slate-700 hover:border-slate-600 focus:border-emerald-500 text-xs font-bold text-white rounded-xl pl-2.5 pr-12 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500/20 transition truncate"
+                            />
+                            <div class="absolute right-2 flex items-center gap-1">
+                                <button
+                                    type="button"
+                                    id="btn-limpiar-cliente-top"
+                                    onclick="limpiarBuscadorClienteTopApp()"
+                                    class="hidden text-slate-400 hover:text-white p-0.5 rounded transition"
+                                    title="Limpiar búsqueda"
+                                >
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                                <button
+                                    type="button"
+                                    onclick="toggleDropdownClientesTopApp()"
+                                    class="text-slate-400 hover:text-emerald-400 p-0.5 rounded transition"
+                                    title="Ver lista de alumnos"
+                                >
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
                         </div>
+                        <div
+                            id="resultados-cliente-top"
+                            class="hidden absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-xl bg-slate-900 border border-slate-700 shadow-2xl z-50"
+                        ></div>
                     </div>
 
                     <div class="hidden sm:flex items-center space-x-1.5">
@@ -746,6 +775,6 @@
     <div id="toast-container" class="fixed bottom-5 left-1/2 -translate-x-1/2 w-11/12 max-w-sm flex flex-col items-center gap-2"></div>
 
     <!-- Script Principal Frontend -->
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=20261120"></script>
 </body>
 </html>
