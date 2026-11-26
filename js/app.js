@@ -588,8 +588,9 @@ function renderNavegadorSemanas() {
             <div class="text-base sm:text-lg font-black tracking-tight">S${s}</div>
         `;
 
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             if (AppState.semanaActiva !== s) {
+                await flushPendingSaves();
                 AppState.semanaActiva = s;
                 cargarRutinaCliente(AppState.clienteActivoId, s);
             }
@@ -769,7 +770,7 @@ function crearTarjetaEjercicio(ej) {
                         placeholder="0.0"
                         class="w-full bg-transparent text-center text-sm sm:text-base font-black text-white outline-none"
                         oninput="onInputSeriePesoChange(${ej.id})"
-                        onblur="guardarCargaInmediata(${ej.id})"
+                        onblur="guardarCargaInmediata(${ej.id}, ${AppState.semanaActiva})"
                     />
                     <span class="text-[10px] text-slate-500 font-bold ml-0.5">kg</span>
                 </div>
@@ -880,7 +881,7 @@ function crearTarjetaEjercicio(ej) {
                     placeholder="Notas o RPE (ej. RPE 8, buena técnica)..."
                     class="flex-1 h-10 bg-slate-900 border border-slate-800 focus:border-slate-600 rounded-xl px-3 text-xs text-slate-300 outline-none"
                     oninput="programarGuardado(${ej.id})"
-                    onblur="guardarCargaInmediata(${ej.id})"
+                    onblur="guardarCargaInmediata(${ej.id}, ${AppState.semanaActiva})"
                 />
 
                 <button 
@@ -1012,24 +1013,42 @@ function toggleCompletado(ejercicioId) {
         card.classList.remove('border-emerald-500/30');
     }
 
-    guardarCargaInmediata(ejercicioId);
+    guardarCargaInmediata(ejercicioId, AppState.semanaActiva);
+}
+
+async function flushPendingSaves() {
+    const timers = { ...AppState.saveDebounceTimers };
+    const promises = [];
+    for (const [ejIdStr, timer] of Object.entries(timers)) {
+        if (timer) {
+            clearTimeout(timer);
+            AppState.saveDebounceTimers[ejIdStr] = null;
+            promises.push(guardarCargaInmediata(parseInt(ejIdStr), AppState.semanaActiva));
+        }
+    }
+    if (promises.length > 0) {
+        await Promise.all(promises);
+    }
 }
 
 function programarGuardado(ejercicioId) {
+    const semanaAlProgramar = AppState.semanaActiva;
     actualizarIndicadorGuardado(ejercicioId, 'Guardando...', 'text-amber-400');
     if (AppState.saveDebounceTimers[ejercicioId]) {
         clearTimeout(AppState.saveDebounceTimers[ejercicioId]);
     }
     AppState.saveDebounceTimers[ejercicioId] = setTimeout(() => {
-        guardarCargaInmediata(ejercicioId);
-    }, 800);
+        guardarCargaInmediata(ejercicioId, semanaAlProgramar);
+    }, 500);
 }
 
-async function guardarCargaInmediata(ejercicioId) {
+async function guardarCargaInmediata(ejercicioId, semanaTarget = null) {
     if (AppState.saveDebounceTimers[ejercicioId]) {
         clearTimeout(AppState.saveDebounceTimers[ejercicioId]);
+        AppState.saveDebounceTimers[ejercicioId] = null;
     }
 
+    const targetSemana = semanaTarget || AppState.semanaActiva;
     const inputPeso = document.getElementById(`input-peso-${ejercicioId}`);
     const inputPorcentaje = document.getElementById(`input-porcentaje-${ejercicioId}`);
     const inputNotas = document.getElementById(`input-notas-${ejercicioId}`);
@@ -1050,17 +1069,17 @@ async function guardarCargaInmediata(ejercicioId) {
 
     const pesosValidos = pesosSeries.filter(p => p > 0);
     const maxPeso = pesosValidos.length > 0 ? Math.max(...pesosValidos) : 0;
-    const pesoKg = (inputPeso && parseFloat(inputPeso.value) > 0) ? parseFloat(inputPeso.value) : maxPeso;
+    const pesoKg = maxPeso > 0 ? maxPeso : ((inputPeso && parseFloat(inputPeso.value) > 0) ? parseFloat(inputPeso.value) : 0);
     const porcentaje = (inputPorcentaje && parseFloat(inputPorcentaje.value) > 0) ? parseFloat(inputPorcentaje.value) : 0;
     const notas = inputNotas ? inputNotas.value.trim() : '';
-    const completado = parseInt(ej.carga_actual.completado) === 1 ? 1 : 0;
+    const completado = parseInt(ej.carga_actual?.completado) === 1 ? 1 : 0;
 
     actualizarIndicadorGuardado(ejercicioId, 'Sincronizando...', 'text-cyan-400');
 
     try {
         const payload = {
             ejercicio_id: ejercicioId,
-            semana: AppState.semanaActiva,
+            semana: targetSemana,
             peso_kg: pesoKg,
             pesos_series: pesosSeries,
             porcentaje_carga: porcentaje,
@@ -1077,13 +1096,16 @@ async function guardarCargaInmediata(ejercicioId) {
         const json = await res.json();
         if (json.success) {
             actualizarIndicadorGuardado(ejercicioId, 'Guardado ✓', 'text-emerald-400');
-            ej.carga_actual = json.data;
             if (ej.historial_cargas) {
-                ej.historial_cargas[AppState.semanaActiva] = json.data;
+                ej.historial_cargas[targetSemana] = json.data;
             }
-            const miniBadge = document.getElementById(`hist-badge-${ejercicioId}-${AppState.semanaActiva}`);
+            if (targetSemana === AppState.semanaActiva) {
+                ej.carga_actual = json.data;
+            }
+            const miniBadge = document.getElementById(`hist-badge-${ejercicioId}-${targetSemana}`);
             if (miniBadge) {
-                miniBadge.textContent = pesoKg > 0 ? `${pesoKg.toFixed(1)}k` : '-';
+                const savedPeso = parseFloat(json.data.peso_kg) || 0;
+                miniBadge.textContent = savedPeso > 0 ? `${savedPeso.toFixed(1)}k` : '-';
             }
         } else {
             actualizarIndicadorGuardado(ejercicioId, 'Error', 'text-rose-400');
@@ -1107,15 +1129,19 @@ async function copiarASiguienteSemana(ejercicioId) {
         mostrarToast('Ya estás en la última semana (S6)', 'info');
         return;
     }
-    const semanaDestino = AppState.semanaActiva + 1;
+    const semanaOrigen = AppState.semanaActiva;
+    const semanaDestino = semanaOrigen + 1;
     mostrarCargando(true);
     try {
+        // Asegurar que cualquier cambio pendiente en la semana actual esté guardado
+        await guardarCargaInmediata(ejercicioId, semanaOrigen);
+
         const res = await fetch(`${API_URL}?action=carga_copiar_semana`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ejercicio_id: ejercicioId,
-                semana_origen: AppState.semanaActiva,
+                semana_origen: semanaOrigen,
                 semana_destino: semanaDestino,
                 incremento_kg: 0
             })
@@ -1123,7 +1149,9 @@ async function copiarASiguienteSemana(ejercicioId) {
         const json = await res.json();
         if (json.success) {
             mostrarToast(`Carga copiada fielmente a S${semanaDestino}`, 'success');
-            await cargarRutinaCliente(AppState.clienteActivoId, AppState.semanaActiva);
+            // Avanzar automáticamente a la semana destino para que el usuario vea los datos clonados
+            AppState.semanaActiva = semanaDestino;
+            await cargarRutinaCliente(AppState.clienteActivoId, semanaDestino);
         } else {
             mostrarToast(json.message || 'Error al clonar', 'error');
         }

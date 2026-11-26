@@ -940,8 +940,13 @@ $currentUser = getCurrentUser();
                     let cargaTexto = '0 kg';
                     if (ej.carga_actual) {
                         if (Array.isArray(ej.carga_actual.pesos_series) && ej.carga_actual.pesos_series.length > 0) {
-                            const seriesValidas = ej.carga_actual.pesos_series.map(p => (parseFloat(p) || 0) + 'k');
-                            cargaTexto = seriesValidas.join(' - ');
+                            const hayValores = ej.carga_actual.pesos_series.some(p => parseFloat(p) > 0);
+                            if (hayValores) {
+                                const seriesValidas = ej.carga_actual.pesos_series.map(p => (parseFloat(p) || 0) + 'k');
+                                cargaTexto = seriesValidas.join(' - ');
+                            } else if (parseFloat(ej.carga_actual.peso_kg) > 0) {
+                                cargaTexto = parseFloat(ej.carga_actual.peso_kg).toFixed(1) + ' kg';
+                            }
                         } else if (parseFloat(ej.carga_actual.peso_kg) > 0) {
                             cargaTexto = parseFloat(ej.carga_actual.peso_kg).toFixed(1) + ' kg';
                         }

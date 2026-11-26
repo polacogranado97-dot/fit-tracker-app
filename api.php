@@ -668,25 +668,35 @@ try {
                     $cleanSeries[] = ($p !== '' && $p !== null) ? round((float)$p, 2) : 0;
                 }
                 $pesosSeriesJson = json_encode($cleanSeries);
-                // Si el peso principal viene en 0 o no se especificó, calcular el máximo de las series cargadas
-                if ($pesoKg <= 0 && !empty($cleanSeries)) {
-                    $pesoKg = max($cleanSeries);
+                // Si hay series positivas, calcular el máximo como peso principal
+                $positives = array_filter($cleanSeries, function($v) { return $v > 0; });
+                if (!empty($positives)) {
+                    $pesoKg = max($positives);
+                } elseif (!empty($cleanSeries) && $pesoKg <= 0) {
+                    $pesoKg = 0.00;
                 }
             } elseif (is_string($pesosSeries) && !empty($pesosSeries)) {
                 $decoded = json_decode($pesosSeries, true);
                 if (is_array($decoded)) {
-                    $pesosSeriesJson = $pesosSeries;
-                    if ($pesoKg <= 0 && !empty($decoded)) {
-                        $pesoKg = max($decoded);
+                    $cleanSeries = [];
+                    foreach ($decoded as $p) {
+                        $cleanSeries[] = ($p !== '' && $p !== null) ? round((float)$p, 2) : 0;
+                    }
+                    $pesosSeriesJson = json_encode($cleanSeries);
+                    $positives = array_filter($cleanSeries, function($v) { return $v > 0; });
+                    if (!empty($positives)) {
+                        $pesoKg = max($positives);
+                    } elseif (!empty($cleanSeries) && $pesoKg <= 0) {
+                        $pesoKg = 0.00;
                     }
                 }
             }
 
             $unRm = (float)$ejInfo['un_rm_estimado'];
-            if ($pesoKg > 0 && $unRm > 0 && ($porcentaje <= 0 || !isset($data['porcentaje_carga']))) {
-                $porcentaje = round(($pesoKg / $unRm) * 100, 2);
-            } elseif ($porcentaje > 0 && $unRm > 0 && ($pesoKg <= 0 || !isset($data['peso_kg']))) {
-                $pesoKg = round(($porcentaje / 100) * $unRm, 2);
+            if ($unRm > 0) {
+                $porcentaje = $pesoKg > 0 ? round(($pesoKg / $unRm) * 100, 2) : 0.00;
+            } elseif ($porcentaje <= 0) {
+                $porcentaje = 0.00;
             }
 
             $stmtUpsert = $pdo->prepare("INSERT INTO registro_cargas (ejercicio_id, semana, peso_kg, pesos_series, porcentaje_carga, completado, notas)
@@ -738,15 +748,21 @@ try {
             $origen = $stmtOrig->fetch();
 
             if (!$origen) {
-                sendJsonResponse(false, null, "No hay cargas registradas en la Semana $semanaOrigen para clonar.", 404);
+                // Si la semana origen aún no tiene registro, inicializarla para permitir clonación limpia
+                $origen = [
+                    'peso_kg' => 0.00,
+                    'pesos_series' => null,
+                    'porcentaje_carga' => 0.00,
+                    'notas' => 'Copiado desde S' . $semanaOrigen
+                ];
             }
 
-            // Copia fiel: la semana de destino recibe exactamente el mismo peso, porcentaje y pesos por serie que tenía al cierre
+            // Copia fiel: la semana de destino recibe exactamente el mismo peso, porcentaje y pesos por serie
             $nuevoPeso = max(0, (float)$origen['peso_kg'] + $incrementoKg);
             $unRm = (float)$ejInfo['un_rm_estimado'];
-            $nuevoPorcentaje = ($incrementoKg > 0 && $unRm > 0)
+            $nuevoPorcentaje = ($unRm > 0 && $nuevoPeso > 0)
                 ? round(($nuevoPeso / $unRm) * 100, 2)
-                : (float)$origen['porcentaje_carga'];
+                : (float)($origen['porcentaje_carga'] ?? 0.00);
             $pesosSeriesOrigen = $origen['pesos_series'] ?? null;
 
             $stmtUpsert = $pdo->prepare("INSERT INTO registro_cargas (ejercicio_id, semana, peso_kg, pesos_series, porcentaje_carga, completado, notas)
@@ -764,7 +780,7 @@ try {
                 'ejercicio_id'     => $ejercicioId,
                 'semana'           => $semanaDestino,
                 'peso_kg'          => $nuevoPeso,
-                'pesos_series'     => !empty($pesosSeriesOrigen) ? json_decode($pesosSeriesOrigen, true) : null,
+                'pesos_series'     => !empty($pesosSeriesOrigen) ? (is_array($pesosSeriesOrigen) ? $pesosSeriesOrigen : json_decode($pesosSeriesOrigen, true)) : null,
                 'porcentaje_carga' => $nuevoPorcentaje
             ], "Carga copiada a Semana $semanaDestino con los mismos valores de S$semanaOrigen.");
             break;

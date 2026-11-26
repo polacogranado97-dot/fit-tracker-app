@@ -116,8 +116,14 @@ function sendJsonResponse(bool $success, $data = null, ?string $message = null, 
 function getJsonInput(): array {
     $raw = file_get_contents('php://input');
     if (empty($raw)) {
-        return $_POST;
+        return !empty($_POST) ? $_POST : [];
     }
     $decoded = json_decode($raw, true);
-    return is_array($decoded) ? $decoded : [];
+    if (is_array($decoded)) {
+        return $decoded;
+    }
+    if (!empty($_POST)) {
+        return $_POST;
+    }
+    return [];
 }
