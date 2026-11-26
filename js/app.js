@@ -571,7 +571,7 @@ function renderNavegadorSemanas() {
     if (!container) return;
 
     container.innerHTML = '';
-    const semanas = [1, 2, 3, 4, 5];
+    const semanas = [1, 2, 3, 4, 5, 6];
 
     semanas.forEach(s => {
         const esActiva = s === AppState.semanaActiva;
@@ -725,10 +725,10 @@ function crearTarjetaEjercicio(ej) {
     }`;
     card.id = `ejercicio-card-${ej.id}`;
 
-    // Miniaturas históricas S1..S5
+    // Miniaturas históricas S1..S6
     let badgesHistorialHtml = '';
     if (ej.historial_cargas) {
-        for (let s = 1; s <= 5; s++) {
+        for (let s = 1; s <= 6; s++) {
             const h = ej.historial_cargas[s];
             const hPeso = h && parseFloat(h.peso_kg) > 0 ? `${parseFloat(h.peso_kg).toFixed(1)}k` : '-';
             const esSemanaActual = s === AppState.semanaActiva;
@@ -739,10 +739,42 @@ function crearTarjetaEjercicio(ej) {
                         : 'bg-slate-800/60 text-slate-400 font-medium'
                 }">
                     <span class="text-[10px] uppercase text-slate-400">S${s}</span>
-                    <span class="text-xs font-semibold">${hPeso}</span>
+                    <span id="hist-badge-${ej.id}-${s}" class="text-xs font-semibold">${hPeso}</span>
                 </div>
             `;
         }
+    }
+
+    // Configuración de Series y Pesos individuales (Planilla de Fuerza)
+    const numSeries = Math.max(1, parseInt(ej.series) || 4);
+    let seriesPesos = [];
+    if (carga && Array.isArray(carga.pesos_series) && carga.pesos_series.length > 0) {
+        seriesPesos = carga.pesos_series;
+    } else if (pesoKg > 0) {
+        seriesPesos = Array(numSeries).fill(pesoKg);
+    }
+
+    let seriesInputsHtml = '';
+    for (let i = 0; i < numSeries; i++) {
+        const sVal = (seriesPesos[i] !== undefined && seriesPesos[i] !== null && seriesPesos[i] !== 0 && seriesPesos[i] !== '0') ? seriesPesos[i] : '';
+        seriesInputsHtml += `
+            <div class="flex-1 min-w-[70px] bg-slate-900 border border-slate-700/80 hover:border-slate-600 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500/20 rounded-xl p-2 text-center transition">
+                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Serie ${i + 1}</span>
+                <div class="flex items-center justify-center">
+                    <input 
+                        type="number" 
+                        step="0.5" 
+                        id="input-serie-${ej.id}-${i}" 
+                        value="${sVal}" 
+                        placeholder="0.0"
+                        class="w-full bg-transparent text-center text-sm sm:text-base font-black text-white outline-none"
+                        oninput="onInputSeriePesoChange(${ej.id})"
+                        onblur="guardarCargaInmediata(${ej.id})"
+                    />
+                    <span class="text-[10px] text-slate-500 font-bold ml-0.5">kg</span>
+                </div>
+            </div>
+        `;
     }
 
     card.innerHTML = `
@@ -807,57 +839,35 @@ function crearTarjetaEjercicio(ej) {
             </div>
         ` : ''}
 
-        <!-- CONTROLES TÁCTILES DE CARGA Y % PARA LA SEMANA ACTIVA -->
-        <div class="bg-slate-950/80 p-3.5 sm:p-4 rounded-2xl border border-slate-800 space-y-3.5">
-            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold mb-1">
+        <!-- CONTROLES DE CARGA POR SERIE Y % PARA LA SEMANA ACTIVA -->
+        <div class="bg-slate-950/80 p-3.5 sm:p-4 rounded-2xl border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between text-xs text-slate-400 font-semibold">
                 <span class="text-emerald-400 uppercase tracking-wider font-bold">Carga Semana ${AppState.semanaActiva} (S${AppState.semanaActiva})</span>
                 <span id="save-status-${ej.id}" class="text-[11px] text-slate-500 font-medium">Auto-guardado</span>
             </div>
 
-            <!-- Fila de Inputs: Carga (kg) y % Carga -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <!-- Control de Peso en KG con botones +/- rápidos -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Carga Aplicada (kg)</label>
-                    <div class="flex items-center space-x-1">
-                        <button type="button" onclick="ajustarPeso(${ej.id}, -2.5)" class="w-10 h-11 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 font-black rounded-xl text-sm transition touch-btn flex items-center justify-center border border-slate-700">
-                            -2.5
-                        </button>
-                        <input 
-                            type="number" 
-                            step="0.5" 
-                            id="input-peso-${ej.id}" 
-                            value="${pesoKg > 0 ? pesoKg : ''}" 
-                            placeholder="0.0"
-                            class="flex-1 h-11 bg-slate-900 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 rounded-xl px-2 text-center text-lg font-black text-white outline-none transition"
-                            oninput="onInputPesoChange(${ej.id})"
-                            onblur="guardarCargaInmediata(${ej.id})"
-                        />
-                        <button type="button" onclick="ajustarPeso(${ej.id}, 2.5)" class="w-10 h-11 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-emerald-400 font-black rounded-xl text-sm transition touch-btn flex items-center justify-center border border-slate-700">
-                            +2.5
-                        </button>
-                    </div>
+            <!-- Planilla de Fuerza: Pesos individuales por Serie -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-300">Pesos por Serie (kg)</label>
+                    <span class="text-[11px] text-slate-400 font-medium">${numSeries} series prescritas</span>
                 </div>
+                <div class="flex flex-wrap gap-2">
+                    ${seriesInputsHtml}
+                </div>
+            </div>
 
-                <!-- Control de % Intensidad con cálculo reactivo -->
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <label class="block text-xs font-bold text-slate-300">% Intensidad (1RM)</label>
-                        ${unRm > 0 ? '<span class="text-[10px] text-cyan-400 font-mono">vinculado a 1RM</span>' : ''}
-                    </div>
-                    <div class="relative">
-                        <input 
-                            type="number" 
-                            step="0.5" 
-                            id="input-porcentaje-${ej.id}" 
-                            value="${porcentaje > 0 ? porcentaje : ''}" 
-                            placeholder="0 %"
-                            class="w-full h-11 bg-slate-900 border border-slate-700 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 rounded-xl pl-3 pr-8 text-center text-lg font-black text-white outline-none transition"
-                            oninput="onInputPorcentajeChange(${ej.id})"
-                            onblur="guardarCargaInmediata(${ej.id})"
-                        />
-                        <span class="absolute right-3 top-2.5 text-sm font-bold text-slate-400 pointer-events-none">%</span>
-                    </div>
+            <!-- Resumen de Carga Top y % Intensidad 1RM -->
+            <div class="flex items-center justify-between bg-slate-900/80 px-3 py-2 rounded-xl border border-slate-800 text-xs">
+                <div class="flex items-center space-x-2">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase">Carga Top:</span>
+                    <span id="label-top-peso-${ej.id}" class="font-black text-white font-mono text-sm">${pesoKg > 0 ? pesoKg + ' kg' : '--'}</span>
+                    <input type="hidden" id="input-peso-${ej.id}" value="${pesoKg > 0 ? pesoKg : ''}" />
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase">% Intensidad (1RM):</span>
+                    <span id="label-porcentaje-${ej.id}" class="font-black text-cyan-400 font-mono text-sm">${porcentaje > 0 ? porcentaje + '%' : '--'}</span>
+                    <input type="hidden" id="input-porcentaje-${ej.id}" value="${porcentaje > 0 ? porcentaje : ''}" />
                 </div>
             </div>
 
@@ -889,18 +899,18 @@ function crearTarjetaEjercicio(ej) {
             </div>
         </div>
 
-        <!-- HISTORIAL DE PROGRESIÓN S1..S5 -->
+        <!-- HISTORIAL DE PROGRESIÓN S1..S6 -->
         <div class="mt-3 pt-2.5 border-t border-slate-800/60">
             <div class="flex items-center justify-between mb-1.5">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Progresión (S1 a S5)</span>
-                ${AppState.semanaActiva < 5 ? `
-                    <button onclick="copiarASiguienteSemana(${ej.id})" class="text-[11px] font-bold text-teal-400 hover:text-teal-300 flex items-center space-x-1" title="Copiar exactamente la misma carga a la semana siguiente">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Progresión (S1 a S6)</span>
+                ${AppState.semanaActiva < 6 ? `
+                    <button onclick="copiarASiguienteSemana(${ej.id})" class="text-[11px] font-bold text-teal-400 hover:text-teal-300 flex items-center space-x-1" title="Copiar exactamente las mismas cargas a la semana siguiente">
                         <span>Copiar a S${AppState.semanaActiva + 1}</span>
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                 ` : ''}
             </div>
-            <div class="grid grid-cols-5 gap-1.5">
+            <div class="grid grid-cols-6 gap-1.5">
                 ${badgesHistorialHtml}
             </div>
         </div>
@@ -918,6 +928,42 @@ function buscarEjercicioPorId(ejercicioId) {
     return null;
 }
 
+function onInputSeriePesoChange(ejercicioId) {
+    const ej = buscarEjercicioPorId(ejercicioId);
+    if (!ej) return;
+
+    const numSeries = Math.max(1, parseInt(ej.series) || 4);
+    const unRm = parseFloat(ej.un_rm_estimado) || 0;
+    const inputPeso = document.getElementById(`input-peso-${ejercicioId}`);
+    const labelTop = document.getElementById(`label-top-peso-${ejercicioId}`);
+    const inputPorcentaje = document.getElementById(`input-porcentaje-${ejercicioId}`);
+    const labelPorcentaje = document.getElementById(`label-porcentaje-${ejercicioId}`);
+
+    const pesos = [];
+    for (let i = 0; i < numSeries; i++) {
+        const inp = document.getElementById(`input-serie-${ejercicioId}-${i}`);
+        if (inp && inp.value !== '') {
+            const val = parseFloat(inp.value) || 0;
+            if (val > 0) pesos.push(val);
+        }
+    }
+
+    const maxPeso = pesos.length > 0 ? Math.max(...pesos) : 0;
+    if (inputPeso) inputPeso.value = maxPeso > 0 ? maxPeso : '';
+    if (labelTop) labelTop.textContent = maxPeso > 0 ? maxPeso + ' kg' : '--';
+
+    if (unRm > 0) {
+        const pct = maxPeso > 0 ? ((maxPeso / unRm) * 100).toFixed(1) : 0;
+        if (inputPorcentaje) inputPorcentaje.value = pct > 0 ? pct : '';
+        if (labelPorcentaje) labelPorcentaje.textContent = pct > 0 ? pct + '%' : '--';
+    } else {
+        if (inputPorcentaje) inputPorcentaje.value = '';
+        if (labelPorcentaje) labelPorcentaje.textContent = '--';
+    }
+
+    programarGuardado(ejercicioId);
+}
+
 function onInputPesoChange(ejercicioId) {
     const inputPeso = document.getElementById(`input-peso-${ejercicioId}`);
     const inputPorcentaje = document.getElementById(`input-porcentaje-${ejercicioId}`);
@@ -926,8 +972,7 @@ function onInputPesoChange(ejercicioId) {
     const peso = parseFloat(inputPeso.value) || 0;
     const unRm = ej ? (parseFloat(ej.un_rm_estimado) || 0) : 0;
 
-    // Libertad total: sugerir % de intensidad únicamente si el campo % está vacío o en 0
-    if (unRm > 0 && peso > 0 && (!inputPorcentaje.value || parseFloat(inputPorcentaje.value) === 0)) {
+    if (unRm > 0 && peso > 0) {
         inputPorcentaje.value = ((peso / unRm) * 100).toFixed(1);
     }
     programarGuardado(ejercicioId);
@@ -941,21 +986,10 @@ function onInputPorcentajeChange(ejercicioId) {
     const pct = parseFloat(inputPorcentaje.value) || 0;
     const unRm = ej ? (parseFloat(ej.un_rm_estimado) || 0) : 0;
 
-    // Libertad total: sugerir peso en kg únicamente si el campo peso está vacío o en 0
-    if (unRm > 0 && pct > 0 && (!inputPeso.value || parseFloat(inputPeso.value) === 0)) {
+    if (unRm > 0 && pct > 0) {
         inputPeso.value = ((pct / 100) * unRm).toFixed(1);
     }
     programarGuardado(ejercicioId);
-}
-
-function ajustarPeso(ejercicioId, delta) {
-    const inputPeso = document.getElementById(`input-peso-${ejercicioId}`);
-    let actual = parseFloat(inputPeso.value) || 0;
-    let nuevo = Math.max(0, actual + delta);
-    inputPeso.value = nuevo.toFixed(1);
-
-    onInputPesoChange(ejercicioId);
-    guardarCargaInmediata(ejercicioId);
 }
 
 function toggleCompletado(ejercicioId) {
@@ -1001,10 +1035,23 @@ async function guardarCargaInmediata(ejercicioId) {
     const inputNotas = document.getElementById(`input-notas-${ejercicioId}`);
     const ej = buscarEjercicioPorId(ejercicioId);
 
-    if (!inputPeso || !inputPorcentaje || !ej) return;
+    if (!ej) return;
 
-    const pesoKg = parseFloat(inputPeso.value) || 0;
-    const porcentaje = parseFloat(inputPorcentaje.value) || 0;
+    const numSeries = Math.max(1, parseInt(ej.series) || 4);
+    const pesosSeries = [];
+    for (let i = 0; i < numSeries; i++) {
+        const inp = document.getElementById(`input-serie-${ejercicioId}-${i}`);
+        if (inp && inp.value !== '') {
+            pesosSeries.push(parseFloat(inp.value) || 0);
+        } else {
+            pesosSeries.push(0);
+        }
+    }
+
+    const pesosValidos = pesosSeries.filter(p => p > 0);
+    const maxPeso = pesosValidos.length > 0 ? Math.max(...pesosValidos) : 0;
+    const pesoKg = (inputPeso && parseFloat(inputPeso.value) > 0) ? parseFloat(inputPeso.value) : maxPeso;
+    const porcentaje = (inputPorcentaje && parseFloat(inputPorcentaje.value) > 0) ? parseFloat(inputPorcentaje.value) : 0;
     const notas = inputNotas ? inputNotas.value.trim() : '';
     const completado = parseInt(ej.carga_actual.completado) === 1 ? 1 : 0;
 
@@ -1015,6 +1062,7 @@ async function guardarCargaInmediata(ejercicioId) {
             ejercicio_id: ejercicioId,
             semana: AppState.semanaActiva,
             peso_kg: pesoKg,
+            pesos_series: pesosSeries,
             porcentaje_carga: porcentaje,
             completado: completado,
             notas: notas
@@ -1032,6 +1080,10 @@ async function guardarCargaInmediata(ejercicioId) {
             ej.carga_actual = json.data;
             if (ej.historial_cargas) {
                 ej.historial_cargas[AppState.semanaActiva] = json.data;
+            }
+            const miniBadge = document.getElementById(`hist-badge-${ejercicioId}-${AppState.semanaActiva}`);
+            if (miniBadge) {
+                miniBadge.textContent = pesoKg > 0 ? `${pesoKg.toFixed(1)}k` : '-';
             }
         } else {
             actualizarIndicadorGuardado(ejercicioId, 'Error', 'text-rose-400');
@@ -1051,8 +1103,8 @@ function actualizarIndicadorGuardado(ejercicioId, texto, claseColor) {
 }
 
 async function copiarASiguienteSemana(ejercicioId) {
-    if (AppState.semanaActiva >= 5) {
-        mostrarToast('Ya estás en la última semana (S5)', 'info');
+    if (AppState.semanaActiva >= 6) {
+        mostrarToast('Ya estás en la última semana (S6)', 'info');
         return;
     }
     const semanaDestino = AppState.semanaActiva + 1;

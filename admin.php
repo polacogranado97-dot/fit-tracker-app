@@ -174,7 +174,7 @@ $currentUser = getCurrentUser();
 
         <!-- SECCIÓN 1: PLANIFICACIÓN & EJERCICIOS -->
         <div id="seccion-admin-rutina" class="space-y-4">
-            <!-- Barra de Semanas S1..S5 -->
+            <!-- Barra de Semanas S1..S6 -->
             <div class="flex items-center justify-between gap-2">
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Microciclo Activo</span>
                 <!-- BOTÓN LIMPIO Y COMPACTO: + Agregar Ejercicio -->
@@ -207,7 +207,7 @@ $currentUser = getCurrentUser();
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
                     <h3 class="text-sm font-black text-white uppercase tracking-wide">Galería de Evolución del Alumno</h3>
-                    <p class="text-xs text-slate-400">Ordenada cronológicamente por semanas (S1..S5)</p>
+                    <p class="text-xs text-slate-400">Ordenada cronológicamente por semanas (S1..S6)</p>
                 </div>
 
                 <button type="button" id="admin-btn-comparar" onclick="abrirComparadorAdmin()" class="py-2 px-3.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-bold text-xs rounded-xl flex items-center justify-center space-x-1.5 transition">
@@ -227,10 +227,6 @@ $currentUser = getCurrentUser();
                     <h3 class="text-sm font-black text-white uppercase tracking-wide">Directorio de Atletas y Coaches</h3>
                     <p class="text-xs text-slate-400">Espacio de administración exclusiva y credenciales de tu gimnasio</p>
                 </div>
-                <button type="button" onclick="abrirModalCrearUsuarioAdmin()" class="py-2 px-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-slate-950 font-black rounded-xl text-xs flex items-center space-x-1 shadow-md shadow-emerald-500/20 transition flex-shrink-0">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                    <span>+ Nuevo Atleta / Usuario</span>
-                </button>
             </div>
 
             <!-- Buscador para alto rendimiento con +100 alumnos -->
@@ -880,7 +876,7 @@ $currentUser = getCurrentUser();
             const container = document.getElementById('admin-semanas-nav');
             if (!container) return;
             container.innerHTML = '';
-            [1, 2, 3, 4, 5].forEach(s => {
+            [1, 2, 3, 4, 5, 6].forEach(s => {
                 const act = s === AdminState.semanaActiva;
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -941,6 +937,15 @@ $currentUser = getCurrentUser();
                     const row = document.createElement('div');
                     row.className = 'p-3 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between gap-3';
                     const tieneSf = ej.imagen_url && ej.imagen_url.includes('assets/ejercicios');
+                    let cargaTexto = '0 kg';
+                    if (ej.carga_actual) {
+                        if (Array.isArray(ej.carga_actual.pesos_series) && ej.carga_actual.pesos_series.length > 0) {
+                            const seriesValidas = ej.carga_actual.pesos_series.map(p => (parseFloat(p) || 0) + 'k');
+                            cargaTexto = seriesValidas.join(' - ');
+                        } else if (parseFloat(ej.carga_actual.peso_kg) > 0) {
+                            cargaTexto = parseFloat(ej.carga_actual.peso_kg).toFixed(1) + ' kg';
+                        }
+                    }
                     row.innerHTML = `
                         <div class="flex items-center space-x-3 flex-1 min-w-0">
                             <div class="w-12 h-12 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden flex-shrink-0 flex items-center justify-center">
@@ -957,7 +962,7 @@ $currentUser = getCurrentUser();
 
                         <div class="flex items-center space-x-2 text-right flex-shrink-0">
                             <div class="text-xs font-bold text-emerald-400 font-mono">
-                                ${ej.carga_actual && ej.carga_actual.peso_kg > 0 ? ej.carga_actual.peso_kg + ' kg' : '0 kg'}
+                                ${cargaTexto}
                             </div>
                             <button type="button" onclick="editarEjercicioAdmin(${ej.id})" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition" title="Editar">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>

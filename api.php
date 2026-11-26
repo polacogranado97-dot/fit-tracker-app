@@ -404,7 +404,7 @@ try {
             $clienteId = isset($_GET['cliente_id']) ? (int)$_GET['cliente_id'] : (int)$currentUser['id'];
             $semana = isset($_GET['semana']) ? (int)$_GET['semana'] : 1;
 
-            if ($semana < 1 || $semana > 5) {
+            if ($semana < 1 || $semana > 6) {
                 $semana = 1;
             }
 
@@ -434,7 +434,7 @@ try {
             if (!$rutina) {
                 // Crear rutina inicial si no existía
                 $stmtNew = $pdo->prepare("INSERT INTO rutinas_semana (cliente_id, nombre, descripcion, fecha_inicio, activo) 
-                                          VALUES (?, 'Mesociclo 1 (S1-S5)', 'Rutina de 5 microciclos', CURDATE(), 1)");
+                                          VALUES (?, 'Mesociclo 1 (S1-S6)', 'Rutina de 6 microciclos', CURDATE(), 1)");
                 $stmtNew->execute([$clienteId]);
                 $stmtR->execute([$clienteId]);
                 $rutina = $stmtR->fetch();
@@ -455,7 +455,7 @@ try {
             $stmtMov->execute([$rutinaId]);
             $movilidades = $stmtMov->fetchAll(PDO::FETCH_KEY_PAIR);
 
-            // Cargar registro de cargas para estos ejercicios (S1..S5)
+            // Cargar registro de cargas para estos ejercicios (S1..S6)
             $cargasPorEjercicio = [];
             if (!empty($ejercicios)) {
                 $ejercicioIds = array_column($ejercicios, 'id');
@@ -465,11 +465,16 @@ try {
                 $todasCargas = $stmtCargas->fetchAll();
 
                 foreach ($todasCargas as $c) {
+                    if (!empty($c['pesos_series'])) {
+                        $c['pesos_series'] = is_array($c['pesos_series']) ? $c['pesos_series'] : json_decode($c['pesos_series'], true);
+                    } else {
+                        $c['pesos_series'] = null;
+                    }
                     $cargasPorEjercicio[$c['ejercicio_id']][$c['semana']] = $c;
                 }
             }
 
-            // Agrupar por días y asociar carga de semana activa + historial S1..S5
+            // Agrupar por días y asociar carga de semana activa + historial S1..S6
             $diasAgrupados = [];
             foreach ($ejercicios as $ej) {
                 $eId = (int)$ej['id'];
@@ -480,17 +485,19 @@ try {
                     'ejercicio_id'     => $eId,
                     'semana'           => $semana,
                     'peso_kg'          => 0.00,
+                    'pesos_series'     => null,
                     'porcentaje_carga' => 0.00,
                     'completado'       => 0,
                     'notas'            => ''
                 ];
 
                 $historial = [];
-                for ($s = 1; $s <= 5; $s++) {
+                for ($s = 1; $s <= 6; $s++) {
                     $historial[$s] = $cargasPorEjercicio[$eId][$s] ?? [
                         'ejercicio_id'     => $eId,
                         'semana'           => $s,
                         'peso_kg'          => 0.00,
+                        'pesos_series'     => null,
                         'porcentaje_carga' => 0.00,
                         'completado'       => 0,
                         'notas'            => ''
@@ -631,8 +638,9 @@ try {
             $porcentaje = isset($data['porcentaje_carga']) ? (float)$data['porcentaje_carga'] : 0.00;
             $completado = isset($data['completado']) ? ((int)$data['completado'] ? 1 : 0) : 0;
             $notas = trim($data['notas'] ?? '');
+            $pesosSeries = isset($data['pesos_series']) ? $data['pesos_series'] : null;
 
-            if ($ejercicioId <= 0 || $semana < 1 || $semana > 5) {
+            if ($ejercicioId <= 0 || $semana < 1 || $semana > 6) {
                 sendJsonResponse(false, null, 'Ejercicio o semana fuera de rango.', 400);
             }
 
@@ -652,6 +660,28 @@ try {
                 sendJsonResponse(false, null, 'No tienes permisos para modificar las cargas de este atleta.', 403);
             }
 
+            // Procesar pesos por serie estructurados
+            $pesosSeriesJson = null;
+            if (is_array($pesosSeries)) {
+                $cleanSeries = [];
+                foreach ($pesosSeries as $p) {
+                    $cleanSeries[] = ($p !== '' && $p !== null) ? round((float)$p, 2) : 0;
+                }
+                $pesosSeriesJson = json_encode($cleanSeries);
+                // Si el peso principal viene en 0 o no se especificó, calcular el máximo de las series cargadas
+                if ($pesoKg <= 0 && !empty($cleanSeries)) {
+                    $pesoKg = max($cleanSeries);
+                }
+            } elseif (is_string($pesosSeries) && !empty($pesosSeries)) {
+                $decoded = json_decode($pesosSeries, true);
+                if (is_array($decoded)) {
+                    $pesosSeriesJson = $pesosSeries;
+                    if ($pesoKg <= 0 && !empty($decoded)) {
+                        $pesoKg = max($decoded);
+                    }
+                }
+            }
+
             $unRm = (float)$ejInfo['un_rm_estimado'];
             if ($pesoKg > 0 && $unRm > 0 && ($porcentaje <= 0 || !isset($data['porcentaje_carga']))) {
                 $porcentaje = round(($pesoKg / $unRm) * 100, 2);
@@ -659,19 +689,24 @@ try {
                 $pesoKg = round(($porcentaje / 100) * $unRm, 2);
             }
 
-            $stmtUpsert = $pdo->prepare("INSERT INTO registro_cargas (ejercicio_id, semana, peso_kg, porcentaje_carga, completado, notas)
-                                         VALUES (?, ?, ?, ?, ?, ?)
+            $stmtUpsert = $pdo->prepare("INSERT INTO registro_cargas (ejercicio_id, semana, peso_kg, pesos_series, porcentaje_carga, completado, notas)
+                                         VALUES (?, ?, ?, ?, ?, ?, ?)
                                          ON DUPLICATE KEY UPDATE 
                                             peso_kg = VALUES(peso_kg),
+                                            pesos_series = VALUES(pesos_series),
                                             porcentaje_carga = VALUES(porcentaje_carga),
                                             completado = VALUES(completado),
                                             notas = VALUES(notas),
                                             updated_at = NOW()");
-            $stmtUpsert->execute([$ejercicioId, $semana, $pesoKg, $porcentaje, $completado, $notas]);
+            $stmtUpsert->execute([$ejercicioId, $semana, $pesoKg, $pesosSeriesJson, $porcentaje, $completado, $notas]);
 
             $stmtGet = $pdo->prepare("SELECT * FROM registro_cargas WHERE ejercicio_id = ? AND semana = ?");
             $stmtGet->execute([$ejercicioId, $semana]);
-            sendJsonResponse(true, $stmtGet->fetch(), "Carga para Semana $semana actualizada correctamente.");
+            $cargaGuardada = $stmtGet->fetch();
+            if ($cargaGuardada && !empty($cargaGuardada['pesos_series'])) {
+                $cargaGuardada['pesos_series'] = json_decode($cargaGuardada['pesos_series'], true);
+            }
+            sendJsonResponse(true, $cargaGuardada, "Carga para Semana $semana actualizada correctamente.");
             break;
 
         case 'carga_copiar_semana':
@@ -681,6 +716,10 @@ try {
             $semanaOrigen = isset($data['semana_origen']) ? (int)$data['semana_origen'] : 1;
             $semanaDestino = isset($data['semana_destino']) ? (int)$data['semana_destino'] : 2;
             $incrementoKg = isset($data['incremento_kg']) ? (float)$data['incremento_kg'] : 0.0;
+
+            if ($semanaOrigen < 1 || $semanaOrigen > 6 || $semanaDestino < 1 || $semanaDestino > 6) {
+                sendJsonResponse(false, null, 'Semanas fuera de rango (1 a 6).', 400);
+            }
 
             // Validar propiedad del ejercicio
             $stmtCheck = $pdo->prepare("SELECT e.id, e.un_rm_estimado, r.cliente_id 
@@ -702,26 +741,30 @@ try {
                 sendJsonResponse(false, null, "No hay cargas registradas en la Semana $semanaOrigen para clonar.", 404);
             }
 
-            // Copia fiel: la semana de destino recibe exactamente el mismo peso y porcentaje que tenía al cierre (sin incremento forzado)
+            // Copia fiel: la semana de destino recibe exactamente el mismo peso, porcentaje y pesos por serie que tenía al cierre
             $nuevoPeso = max(0, (float)$origen['peso_kg'] + $incrementoKg);
             $unRm = (float)$ejInfo['un_rm_estimado'];
             $nuevoPorcentaje = ($incrementoKg > 0 && $unRm > 0)
                 ? round(($nuevoPeso / $unRm) * 100, 2)
                 : (float)$origen['porcentaje_carga'];
+            $pesosSeriesOrigen = $origen['pesos_series'] ?? null;
 
-            $stmtUpsert = $pdo->prepare("INSERT INTO registro_cargas (ejercicio_id, semana, peso_kg, porcentaje_carga, completado, notas)
-                                         VALUES (?, ?, ?, ?, 0, ?)
+            $stmtUpsert = $pdo->prepare("INSERT INTO registro_cargas (ejercicio_id, semana, peso_kg, pesos_series, porcentaje_carga, completado, notas)
+                                         VALUES (?, ?, ?, ?, ?, 0, ?)
                                          ON DUPLICATE KEY UPDATE 
                                             peso_kg = VALUES(peso_kg),
+                                            pesos_series = VALUES(pesos_series),
                                             porcentaje_carga = VALUES(porcentaje_carga),
                                             completado = 0,
-                                            notas = VALUES(notas)");
-            $stmtUpsert->execute([$ejercicioId, $semanaDestino, $nuevoPeso, $nuevoPorcentaje, $origen['notas'] ?: ('Copiado desde S' . $semanaOrigen)]);
+                                            notas = VALUES(notas),
+                                            updated_at = NOW()");
+            $stmtUpsert->execute([$ejercicioId, $semanaDestino, $nuevoPeso, $pesosSeriesOrigen, $nuevoPorcentaje, $origen['notas'] ?: ('Copiado desde S' . $semanaOrigen)]);
 
             sendJsonResponse(true, [
                 'ejercicio_id'     => $ejercicioId,
                 'semana'           => $semanaDestino,
                 'peso_kg'          => $nuevoPeso,
+                'pesos_series'     => !empty($pesosSeriesOrigen) ? json_decode($pesosSeriesOrigen, true) : null,
                 'porcentaje_carga' => $nuevoPorcentaje
             ], "Carga copiada a Semana $semanaDestino con los mismos valores de S$semanaOrigen.");
             break;
@@ -797,7 +840,7 @@ try {
             }
 
             $rutaRelativa = 'uploads/progreso/' . $nombreArchivo;
-            $semana = isset($_POST['semana']) ? max(1, min(5, (int)$_POST['semana'])) : 1;
+            $semana = isset($_POST['semana']) ? max(1, min(6, (int)$_POST['semana'])) : 1;
             $tipoAngulo = trim($_POST['tipo_angulo'] ?? 'frente');
             $fechaSubida = !empty($_POST['fecha_subida']) ? $_POST['fecha_subida'] : date('Y-m-d');
             $observaciones = trim($_POST['observaciones'] ?? '');
@@ -828,7 +871,7 @@ try {
             $sql = "SELECT * FROM fotos_progreso WHERE usuario_id = ?";
             $params = [$usuarioId];
 
-            if ($semana > 0 && $semana <= 5) {
+            if ($semana > 0 && $semana <= 6) {
                 $sql .= " AND semana = ?";
                 $params[] = $semana;
             }
@@ -870,7 +913,7 @@ try {
             $sql = "SELECT * FROM fotos_progreso WHERE usuario_id = ?";
             $params = [$usuarioId];
 
-            if ($semana > 0 && $semana <= 5) {
+            if ($semana > 0 && $semana <= 6) {
                 $sql .= " AND semana = ?";
                 $params[] = $semana;
             }

@@ -74,13 +74,14 @@ CREATE TABLE `ejercicios_rutina` (
 
 -- ------------------------------------------------------------------------------
 -- 4. TABLA: registro_cargas
--- Registro semanal (S1 a S5) del peso aplicado (kg) y porcentaje de intensidad
+-- Registro semanal (S1 a S6) del peso aplicado (kg), pesos por serie y porcentaje de intensidad
 -- ------------------------------------------------------------------------------
 CREATE TABLE `registro_cargas` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `ejercicio_id` INT NOT NULL,
-    `semana` INT NOT NULL COMMENT 'Número de semana del microciclo (1 al 5)',
+    `semana` INT NOT NULL COMMENT 'Número de semana del microciclo (1 al 6)',
     `peso_kg` DECIMAL(6,2) NOT NULL DEFAULT 0.00 COMMENT 'Carga efectiva en kilogramos',
+    `pesos_series` TEXT NULL DEFAULT NULL COMMENT 'JSON array con pesos por serie ej [30, 35, 35, 45]',
     `porcentaje_carga` DECIMAL(5,2) NOT NULL DEFAULT 0.00 COMMENT 'Porcentaje de carga / intensidad (% sobre 1RM o plan)',
     `completado` TINYINT(1) NOT NULL DEFAULT 0 COMMENT '1 = Serie/ejercicio completado con éxito',
     `notas` VARCHAR(255) NULL COMMENT 'Sensaciones, RPE o anotación breve del atleta',
@@ -88,7 +89,7 @@ CREATE TABLE `registro_cargas` (
     `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_carga_ejercicio` FOREIGN KEY (`ejercicio_id`) 
         REFERENCES `ejercicios_rutina` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT `chk_semana_valida` CHECK (`semana` BETWEEN 1 AND 5),
+    CONSTRAINT `chk_semana_valida` CHECK (`semana` BETWEEN 1 AND 6),
     UNIQUE KEY `uk_ejercicio_semana` (`ejercicio_id`, `semana`),
     INDEX `idx_registro_semana` (`semana`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

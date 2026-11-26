@@ -107,6 +107,7 @@ if ($currentUser['rol'] === 'admin') {
                             <option value="3">Semana 3 (S3)</option>
                             <option value="4">Semana 4 (S4)</option>
                             <option value="5">Semana 5 (S5)</option>
+                            <option value="6">Semana 6 (S6)</option>
                         </select>
                     </div>
                     <div>
